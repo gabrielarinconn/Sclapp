@@ -45,7 +45,7 @@ You can access the live version of the project here:
 | Profile Picture | Full Name | Role | GitHub |
 | --- | --- | --- | --- | 
 | <img src="https://www.google.com/search?q=https://github.com/user1.png" width="100"> | Natalia Vargas | QA / Developer | [@nataliavos](https://github.com/Nataliavos) |
-| <img src="/img/gabriela_foto_perfil.png" width="30"> | Gabriela Rincón | Scrum Master  /  UI/UX Designer /  Developer | [@gabrielarinconn](https://github.com/gabrielarinconn) |
+| <img src="/img/gabriela_foto_perfil.png" width="80"> | Gabriela Rincón | Scrum Master  /  UI/UX Designer /  Developer | [@gabrielarinconn](https://github.com/gabrielarinconn) |
 | <img src="https://www.google.com/search?q=https://github.com/user3.png" width="100"> | Camila Vidales| Developer | [@marespi21](https://github.com/marespi21) |
 | <img src="[https://github.com/user4.png](https://www.google.com/search?q=https://github.com/user4.png)" width="100"> | Tobias | Developer | [@tobiax18](https://github.com/tobiax18) |
 | <img src="[https://github.com/user5.png](https://www.google.com/search?q=https://github.com/user5.png)" width="100"> | Julio Ramires| Product Owner / Developer | [@julioramcoder](https://github.com/julioramcoder) |
