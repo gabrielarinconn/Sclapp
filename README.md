@@ -1,4 +1,4 @@
-<img src="/img/Banner_Sclapp.png">
+<img src="src/img/Banner_Sclapp.png">
 
 # Sclapp
 
@@ -6,9 +6,26 @@
 
 ## 📝 Project Description
 
-**Sclapp** is an interactive web platform designed to solve the "job hunting gap" faced by Riwi coders. This tool focuses on reducing the stagnation of students in their job search by providing an automated matching system between their technical stack and real-market vacancies.
+**Sclapp** consists of an **internal web platform for managing companies and outreach processes aimed at tech job generation**, with a particular focus on improving employment opportunities for junior developers.
 
-Built as a **Multi-Page Application (MPA)** using pure vanilla technologies, it features a visual tracking pipeline (Kanban board) and a personalized job discovery feed to streamline the transition from training to professional employment.
+The platform is implemented as a **Single Page Application (SPA)** using **HTML, CSS, and Vanilla JavaScript** on the frontend, a **Python-based backend exposing a REST API**, and a **relational database (SQLite or PostgreSQL)** as the system’s source of truth. Its main objective is to centralize, automate, and optimize the process of identifying potential hiring companies, managing outreach efforts, and making data-driven decisions based on measurable engagement metrics.
+
+A core component of the system is the use of **manual and semi-automated web scraping** to collect structured information about companies that publish tech job vacancies. Scraped data is stored, normalized, and enriched within the database, allowing users to build an internal repository of companies and vacancies without relying solely on external job platforms. This process significantly reduces the time spent searching across multiple sources and platforms.
+
+In addition, the platform integrates **artificial intelligence mechanisms** to support analysis and decision making. AI-driven processes are used to: 
+
+* Filter and rank companies based on their likelihood of hiring tech talent, especially junior developers.
+* Generate a **scoring model** that evaluates companies using historical outreach data, engagement rates, and vacancy characteristics.
+* Produce **automated analytical reports** that summarize trends, performance indicators, and potential opportunities.
+* Assist in identifying the most promising companies for outreach, enabling more efficient allocation of time and resources.
+
+From an architectural standpoint, the frontend dynamically switches views and renders tables, charts, and kanban boards while consuming backend endpoints through `fetch`. The backend handles scraping execution, email delivery, tracking of user interactions (email opens, clicks, and responses), metric calculation, and AI-assisted report generation. All data and events are persistently stored in the relational database, ensuring consistency and traceability across the system.
+
+By addressing inefficiencies in the tech hiring ecosystem, the platform responds to the reality that junior developers typically invest between **65 and 120 hours** throughout the job search lifecycle, including CV preparation, active searching across multiple platforms, interviews, and technical assessments. By leveraging scraping, automation, and artificial intelligence, the system aims to reduce friction in company discovery and outreach processes, enabling more informed decisions, faster engagement, and improved outcomes for both recruiters and tech talent.
+
+In summary, this project combines SPA frontend development, backend API design, relational data modeling, web scraping, artificial intelligence, and data visualization into a unified internal platform that enhances outreach efficiency and supports strategic, data-driven hiring decisions.
+
+
 
 ## 🚀 Deployment
 
@@ -58,7 +75,7 @@ To run this project locally, follow these steps:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/your-repo/bridge-it.git
+git clone https://github.com/your-repo/Sclapp.git
 
 ```
 
