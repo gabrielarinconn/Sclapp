@@ -4,56 +4,66 @@
 
 > **"Smart data for real opportunities"**
 
+---
+
 ## 📝 Project Description
 
-**Sclapp** consists of an **internal web platform for managing companies and outreach processes aimed at tech job generation**, with a particular focus on improving employment opportunities for junior developers.
+**Sclapp** is an internal web platform designed to manage companies and outreach processes aimed at improving employment opportunities for junior developers.
 
-The platform is implemented as a **Single Page Application (SPA)** using **HTML, CSS, and Vanilla JavaScript** on the frontend, a **Python-based backend exposing a REST API**, and a **relational database (SQLite or PostgreSQL)** as the system’s source of truth. Its main objective is to centralize, automate, and optimize the process of identifying potential hiring companies, managing outreach efforts, and making data-driven decisions based on measurable engagement metrics.
+The platform centralizes the process of identifying companies, managing potential leads, and executing outreach strategies through email campaigns. Its goal is to help teams organize hiring opportunities and make better decisions using data and automation.
 
-A core component of the system is the use of **manual and semi-automated web scraping** to collect structured information about companies that publish tech job vacancies. Scraped data is stored, normalized, and enriched within the database, allowing users to build an internal repository of companies and vacancies without relying solely on external job platforms. This process significantly reduces the time spent searching across multiple sources and platforms.
+The system is built as a **Single Page Application (SPA)** using **HTML, CSS, and Vanilla JavaScript** on the frontend, a **Python backend exposing a REST API**, and a **relational database (PostgreSQL or SQLite)** as the main source of truth.
 
-In addition, the platform integrates **artificial intelligence mechanisms** to support analysis and decision making. AI-driven processes are used to: 
+A key component of the platform is the use of **manual and semi-automated web scraping** to collect structured information about companies that publish technology job vacancies. This data is stored, normalized, and enriched within the database, allowing users to create an internal repository of companies without relying entirely on external job platforms.
 
-* Filter and rank companies based on their likelihood of hiring tech talent, especially junior developers.
-* Generate a **scoring model** that evaluates companies using historical outreach data, engagement rates, and vacancy characteristics.
-* Produce **automated analytical reports** that summarize trends, performance indicators, and potential opportunities.
-* Assist in identifying the most promising companies for outreach, enabling more efficient allocation of time and resources.
+The system also incorporates **artificial intelligence mechanisms** to support analysis and decision-making. These AI-driven processes help:
 
-From an architectural standpoint, the frontend dynamically switches views and renders tables, charts, and kanban boards while consuming backend endpoints through `fetch`. The backend handles scraping execution, email delivery, tracking of user interactions (email opens, clicks, and responses), metric calculation, and AI-assisted report generation. All data and events are persistently stored in the relational database, ensuring consistency and traceability across the system.
+- Filter and rank companies based on their likelihood of hiring tech talent.
+- Generate scoring models based on engagement data and company activity.
+- Produce automated analytical reports.
+- Identify the most promising companies for outreach.
 
-By addressing inefficiencies in the tech hiring ecosystem, the platform responds to the reality that junior developers typically invest between **65 and 120 hours** throughout the job search lifecycle, including CV preparation, active searching across multiple platforms, interviews, and technical assessments. By leveraging scraping, automation, and artificial intelligence, the system aims to reduce friction in company discovery and outreach processes, enabling more informed decisions, faster engagement, and improved outcomes for both recruiters and tech talent.
+From an architectural perspective, the frontend dynamically renders views, tables, charts, and kanban boards while communicating with backend endpoints through `fetch`. The backend handles scraping execution, email delivery, tracking of user interactions, and data analysis.
 
-In summary, this project combines SPA frontend development, backend API design, relational data modeling, web scraping, artificial intelligence, and data visualization into a unified internal platform that enhances outreach efficiency and supports strategic, data-driven hiring decisions.
+By automating these processes, Sclapp reduces the time and effort required to identify hiring companies and execute outreach campaigns, helping improve employment opportunities for junior developers.
 
-
+---
 
 ## 🚀 Deployment
 
 You can access the live version of the project here:
 
+**[Add deployment link here — GitHub Pages / Netlify / Render]**
 
-**[Link to your deployed site, e.g., GitHub Pages/Netlify]** 
+
 
 ---
-
 ## 🛠️ Technologies Used
 
-* 
-**Frontend:** HTML5, CSS3, JavaScript (Vanilla).
+**Frontend**
 
+- HTML5
+- CSS3
+- JavaScript (Vanilla)
 
-* 
-**Styles:** [Bootstrap / Tailwind CSS] (Only allowed style libraries).
+**Styles**
 
+- Tailwind CSS / Bootstrap (allowed style libraries)
 
-* 
-**Database:** SQL for data persistence.
+**Backend**
 
+- Python
+- Flask REST API
 
-* 
-**Methodology:** SCRUM managed through Azure DevOps.
+**Database**
 
+- PostgreSQL / SQLite
+- SQL
 
+**Methodology**
+
+- SCRUM
+- Azure DevOps for project management
 
 ---
 
@@ -92,17 +102,33 @@ Navigate to the project folder and open `index.html` in your preferred browser.
 
 ## 📁 Project Structure
 
-* `/assets`: Images, icons, and static resources.
-* `/css`: Stylesheets (Tailwind/Bootstrap configurations).
-* `/js`: Vanilla JavaScript logic (Matching algorithm, DOM manipulation).
-* 
-`/database`: SQL scripts and relational model diagrams.
-
-
-* 
-`/docs`: Technical documentation and PDF reports.
-
-
+Sclapp
+│
+├── backend
+│   ├── config
+│   ├── db
+│   ├── models
+│   ├── modules
+│   │   ├── auth
+│   │   ├── companies
+│   │   ├── scraping
+│   │   ├── email
+│   │   └── dashboard
+│   └── services
+│
+├── frontend
+│   ├── assets
+│   ├── css
+│   ├── js
+│   └── index.html
+│
+├── database
+│   └── schema.sql
+│
+├── docs
+│   └── technical documentation
+│
+└── README.md
 
 ---
 
