@@ -1,28 +1,24 @@
-sib-api-v3-sdk
+# API
+fastapi
+uvicorn[standard]
+pydantic[email]
+
+# Database
+psycopg2-binary
+
+# Environment
 python-dotenv
 
+# Auth (password hashing + JWT)
+werkzeug
+PyJWT
 
+# AI
+openai
 
-Pasos para que funcione:
-Crea la plantilla en Brevo: Ve a Brevo > Plantillas > Nueva Plantilla.
+# HTTP & scraping
+requests
+beautifulsoup4
 
-Usa Aura IA: En el editor, usa la IA para generar el cuerpo del correo enfocado en contratar juniors.
-
-Inserta variables: Usa {{ params.NAME }} donde quieras que vaya el nombre de la empresa.
-
-Obtén el Template ID: Al guardar, Brevo te mostrará un número al lado del nombre de la plantilla. Pon ese número en TEMPLATE_ID en el archivo routes.py.
-
-
-
--- Estructura para guardar el historial de correos de outreach
-CREATE TABLE IF NOT EXISTS outreach_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    company_id INTEGER NOT NULL,
-    brevo_message_id VARCHAR(255), -- ID que devuelve Brevo al enviar
-    template_used INTEGER,
-    status VARCHAR(50) DEFAULT 'sent', -- sent, opened, clicked, bounced
-    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    opened_at DATETIME,
-    clicked_at DATETIME,
-    FOREIGN KEY (company_id) REFERENCES companies(id)
-);
+# Email (Brevo / Sendinblue)
+sib-api-v3-sdk
