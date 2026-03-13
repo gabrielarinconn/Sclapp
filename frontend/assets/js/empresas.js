@@ -2,15 +2,21 @@
 
 import { apiClient } from './apiClient.js';
 
-const FALLBACK_COMPANIES = [
-  { nombre: 'TechCorp Solutions', tech: 'React, Node.js', nivel: 'Senior', ciudad: 'Bogotá', score: 'Alta' },
-  { nombre: 'InnovateTech', tech: 'Python, Django', nivel: 'Mid', ciudad: 'Medellín', score: 'Alta' },
-  { nombre: 'ByteForge', tech: 'Angular, .NET', nivel: 'Junior', ciudad: 'Cali', score: 'Media' },
-  { nombre: 'AppWorks Studio', tech: 'React Native', nivel: 'Mid', ciudad: 'Remoto', score: 'Alta' },
-  { nombre: 'CloudNine Labs', tech: 'Node.js, AWS', nivel: 'Senior', ciudad: 'Bogotá', score: 'Media' },
-  { nombre: 'DevFactory', tech: 'Python, FastAPI', nivel: 'Mid', ciudad: 'Medellín', score: 'Alta' },
-  { nombre: 'StartupXYZ', tech: 'Vue.js, Firebase', nivel: 'Junior', ciudad: 'Bucaramanga', score: 'Alta' },
-];
+const FALLBACK_COMPANIES = [];
+
+function scoreToBadge(score) {
+  if (score === 3) return 'Alta';
+  if (score === 2) return 'Media';
+  if (score === 1) return 'Baja';
+  return '—';
+}
+
+function scoreToClass(score) {
+  if (score === 3) return 'badge-alta';
+  if (score === 2) return 'badge-media';
+  if (score === 1) return 'badge-baja';
+  return 'badge-media';
+}
 
 export function renderCompaniesView(main) {
   main.innerHTML = `
@@ -30,17 +36,14 @@ export function renderCompaniesView(main) {
         <div class="filtro-item">
           <select class="filtro-select" id="filtroTech">
             <option value="">All technologies</option>
-            <option value="React">React</option>
-            <option value="Python">Python</option>
-            <option value="Node.js">Node.js</option>
-            <option value="Angular">Angular</option>
           </select>
         </div>
         <div class="filtro-item">
           <select class="filtro-select" id="filtroScore">
             <option value="">Any score</option>
-            <option value="Alta">High opportunity</option>
-            <option value="Media">Medium opportunity</option>
+            <option value="3">High (3)</option>
+            <option value="2">Medium (2)</option>
+            <option value="1">Low (1)</option>
           </select>
         </div>
       </div>
@@ -72,9 +75,9 @@ export function renderCompaniesView(main) {
           <div class="form-group">
             <label>Search platform</label>
             <select class="filtro-select" style="width:100%;" id="scrapingSource">
-              <option>LinkedIn Jobs</option>
-              <option>Computrabajo</option>
-              <option>Indeed Colombia</option>
+              <option value="remotive">Remotive</option>
+              <option value="remoteok">RemoteOK</option>
+              <!-- <option value="getonboard">GetOnBoard</option> -->
             </select>
           </div>
           <div class="form-group">
@@ -91,45 +94,37 @@ export function renderCompaniesView(main) {
     </div>
   `;
 
-  let companiesData = [...FALLBACK_COMPANIES];
+  let companiesData = [];
 
   function renderTableRows() {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
 
-    const techFilter = document.getElementById('filtroTech')?.value || '';
-    const scoreFilter = document.getElementById('filtroScore')?.value || '';
-    const textFilter = (document.getElementById('filtroBuscar')?.value || '').toLowerCase();
-
-    const filtered = companiesData.filter((e) => {
-      const matchText = e.nombre.toLowerCase().includes(textFilter);
-      const matchTech = !techFilter || e.tech.includes(techFilter);
-      const matchScore = !scoreFilter || e.score === scoreFilter;
-      return matchText && matchTech && matchScore;
-    });
+    const filtered = companiesData;
 
     if (filtered.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="tabla-vacia">🔍 No companies found with these criteria.</td></tr>';
+        '<tr><td colspan="6" class="tabla-vacia">🔍 No companies found. Run scraping or adjust filters.</td></tr>';
       return;
     }
 
     tbody.innerHTML = filtered
       .map((e) => {
-        const scoreClass = e.score === 'Alta' ? 'badge-alta' : 'badge-media';
-        const escapedName = e.nombre.replace(/'/g, "\\'");
+        const scoreLabel = e.scoreLabel ?? scoreToBadge(e.scoreNum);
+        const scoreClass = scoreToClass(e.scoreNum);
+        const escapedName = (e.nombre || '').replace(/'/g, "\\'");
         return `
           <tr>
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:30px;height:30px;background:#1a2535;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#2dd4bf;font-weight:bold;font-size:12px;">${e.nombre[0]}</div>
-                <span style="font-weight:600;color:#e2e8f0;">${e.nombre}</span>
+                <div style="width:30px;height:30px;background:#1a2535;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#2dd4bf;font-weight:bold;font-size:12px;">${(e.nombre || '—')[0]}</div>
+                <span style="font-weight:600;color:#e2e8f0;">${e.nombre || '—'}</span>
               </div>
             </td>
-            <td style="color:#64748b;font-size:12px;">${e.tech}</td>
-            <td style="color:#64748b;font-size:12px;">${e.nivel}</td>
-            <td style="color:#64748b;font-size:12px;">${e.ciudad}</td>
-            <td><span class="badge ${scoreClass}">${e.score}</span></td>
+            <td style="color:#64748b;font-size:12px;">${e.tech || '—'}</td>
+            <td style="color:#64748b;font-size:12px;">${e.nivel || '—'}</td>
+            <td style="color:#64748b;font-size:12px;">${e.ciudad || '—'}</td>
+            <td><span class="badge ${scoreClass}">${scoreLabel}</span></td>
             <td style="text-align:right;">
               <button class="kanban-kebab" data-company="${escapedName}">⋮</button>
             </td>
@@ -146,17 +141,45 @@ export function renderCompaniesView(main) {
     });
   }
 
-  async function loadCompanies() {
+  async function loadTechnologyOptions() {
+    const techSelect = document.getElementById('filtroTech');
+    if (!techSelect) return;
+  
     try {
-      const data = await apiClient.getCompanies();
+      const trend = await apiClient.getTechnologiesTrending();
+  
+      techSelect.innerHTML = '<option value="">All technologies</option>';
+  
+      if (Array.isArray(trend) && trend.length > 0) {
+        trend.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.name_tech || '';
+          option.textContent = `${item.name_tech || '—'} (${item.companies_using ?? 0})`;
+          techSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      techSelect.innerHTML = '<option value="">All technologies</option>';
+    }
+  }
+
+  async function loadCompanies() {
+    const search = document.getElementById('filtroBuscar')?.value?.trim() || '';
+    const tech = document.getElementById('filtroTech')?.value || '';
+    const score = document.getElementById('filtroScore')?.value || '';
+    try {
+      const data = await apiClient.getCompanies(search, tech, score);
       if (Array.isArray(data) && data.length > 0) {
         companiesData = data.map((c) => ({
-          nombre: c.name || c.nombre || c.company_name || '—',
-          tech: c.tech || c.technologies || c.tech_stack || '—',
-          nivel: c.nivel || c.level || '—',
-          ciudad: c.ciudad || c.city || c.location || '—',
-          score: c.score || c.ai_score || 'Media',
+          nombre: c.name || '—',
+          tech: typeof c.technologies === 'string' ? c.technologies : (Array.isArray(c.technologies) ? c.technologies.join(', ') : '—'),
+          nivel: c.category || '—',
+          ciudad: c.country || '—',
+          scoreNum: c.score != null ? Number(c.score) : null,
+          scoreLabel: scoreToBadge(c.score != null ? Number(c.score) : null),
         }));
+      } else {
+        companiesData = [];
       }
     } catch (_) {
       companiesData = [...FALLBACK_COMPANIES];
@@ -166,7 +189,7 @@ export function renderCompaniesView(main) {
 
   ['filtroBuscar', 'filtroTech', 'filtroScore'].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener(id === 'filtroBuscar' ? 'input' : 'change', renderTableRows);
+    if (el) el.addEventListener(id === 'filtroBuscar' ? 'input' : 'change', loadCompanies);
   });
 
   document.getElementById('btnOpenScraping')?.addEventListener('click', () => {
@@ -187,12 +210,12 @@ export function renderCompaniesView(main) {
     const queryEl = document.getElementById('scrapingQuery');
     const statusEl = document.getElementById('scrapingStatus');
     const query = queryEl?.value?.trim() || '';
-
+  
     if (!query) {
       window.alert('Please enter a search term.');
       return;
     }
-
+  
     statusEl.innerHTML = `
       <div style="padding:15px;background:rgba(45,212,191,0.05);border:1px dashed #2dd4bf44;border-radius:8px;text-align:center;">
         <p style="color:#2dd4bf;font-size:13px;margin-bottom:5px;">⏳ Searching vacancies for "${query}"...</p>
@@ -201,29 +224,47 @@ export function renderCompaniesView(main) {
         </div>
       </div>
     `;
-
+  
     setTimeout(() => {
       const bar = document.getElementById('scrapingBar');
       if (bar) bar.style.width = '100%';
     }, 50);
-
+  
+    let result = null;
+  
     try {
-      await apiClient.runScraping({
-        source: document.getElementById('scrapingSource')?.value || 'LinkedIn Jobs',
-        query,
+      result = await apiClient.runScraping({
+        parameters: {
+          source: document.getElementById('scrapingSource')?.value || 'remotive',
+          max_items: 5,
+          only_riwi_relevant: true,
+          require_junior_focus: false
+        }
       });
-    } catch (_) {}
-
-    setTimeout(() => {
+  
       statusEl.innerHTML = `
         <div style="padding:15px;background:rgba(52,211,153,0.1);border:1px solid #34d39944;border-radius:8px;text-align:center;">
           <p style="color:#34d399;font-size:13px;font-weight:600;">✅ Scraping completed!</p>
-          <p style="color:#64748b;font-size:11px;">12 new potential companies found.</p>
+          <p style="color:#64748b;font-size:11px;">
+            Found: ${result?.total_found ?? 0} · New: ${result?.total_new ?? 0} · Updated: ${result?.total_updated ?? 0} · Failed: ${result?.total_failed ?? 0}
+          </p>
         </div>
       `;
+  
+      loadTechnologyOptions();
       loadCompanies();
-    }, 3200);
+    } catch (error) {
+      statusEl.innerHTML = `
+        <div style="padding:15px;background:rgba(239,68,68,0.1);border:1px solid #ef444444;border-radius:8px;text-align:center;">
+          <p style="color:#ef4444;font-size:13px;font-weight:600;">❌ Scraping failed</p>
+          <p style="color:#64748b;font-size:11px;">Please try again.</p>
+        </div>
+      `;
+    }
   });
 
+  loadTechnologyOptions();
   loadCompanies();
 }
+
+

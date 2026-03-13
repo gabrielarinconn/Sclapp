@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from backend.db.connection import execute_query, get_db_info
 from . import normalizer
 from . import job_filters
+from backend.services.ai import job_classifier
 from .sources import example_source
 from .sources import remoteok
 from .sources import remotive
@@ -144,12 +145,15 @@ def insert_company(
     country: Optional[str],
     description: Optional[str] = None,
     category: Optional[str] = None,
+    score: Optional[int] = None,
 ) -> Optional[int]:
     """Insert a new company. id_status set by DB trigger. Returns id_company or None."""
+    if score is not None and (score < 1 or score > 3):
+        score = None
     rows = execute_query(
         """
-        INSERT INTO company (nit, name, name_normalization, sector, email, phone, url, country, description, category)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO company (nit, name, name_normalization, sector, email, phone, url, country, description, category, score)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id_company
         """,
         (
@@ -163,6 +167,7 @@ def insert_company(
             (country or "").strip() or None,
             description or None,
             (category or "").strip() or None,
+            score,
         ),
         fetch=True,
     )
@@ -180,10 +185,13 @@ def update_company(
     url: Optional[str],
     description: Optional[str],
     category: Optional[str] = None,
+    score: Optional[int] = None,
 ) -> bool:
-    """Update only empty fields with new values (including category)."""
+    """Update only empty fields with new values (including category, score)."""
     updates: List[str] = []
     params: List[Any] = []
+    if score is not None and (score < 1 or score > 3):
+        score = None
     for field, new_val in [
         ("sector", sector),
         ("email", email),
@@ -191,6 +199,7 @@ def update_company(
         ("url", url),
         ("description", description),
         ("category", category),
+        ("score", score),
     ]:
         cur = existing.get(field)
         is_empty = cur is None or (isinstance(cur, str) and cur.strip() == "")
@@ -333,13 +342,16 @@ def run_scraping(
     totals["total_found"] = len(companies)
 
     for idx, raw in enumerate(companies):
+        
         try:
             raw_job = {
+                "company_name": raw.get("name"),
                 "job_title": raw.get("job_title") or raw.get("position") or raw.get("title"),
                 "job_category": raw.get("job_category") or raw.get("category"),
                 "job_description": raw.get("job_description") or raw.get("description"),
                 "tags": raw.get("tags") or raw.get("technologies"),
                 "technologies": raw.get("technologies"),
+                "source": raw.get("source"),
             }
             if only_riwi_relevant and not job_filters.is_riwi_relevant_job(
                 raw_job,
@@ -350,10 +362,19 @@ def run_scraping(
 
             profile = job_filters.extract_profile_from_job(raw_job)
             tech_names = job_filters.extract_technologies_from_job(raw_job)
-            if not tech_names and isinstance(raw.get("technologies"), list):
-                for t in raw["technologies"]:
-                    if t and isinstance(t, str) and normalize_technology_name(t):
-                        tech_names.append(normalize_technology_name(t))
+            score: Optional[int] = None
+            try:
+                ai_result = job_classifier.classify_job_with_ai(raw_job)
+            except Exception:
+                ai_result = None
+
+            if ai_result is not None:
+                if not ai_result.get("is_relevant"):
+                    continue
+                profile = ai_result.get("profile") or profile
+                score = ai_result.get("score")
+                if ai_result.get("technologies"):
+                    tech_names = [str(t).strip().lower() for t in ai_result["technologies"] if t]
             tech_names = list(dict.fromkeys(tech_names))
 
             safe = _safe_company_contract(raw)
@@ -376,6 +397,7 @@ def run_scraping(
                     url=safe.get("url"),
                     description=None,
                     category=profile,
+                    score=score,
                 )
                 id_company = existing["id_company"]
                 totals["total_updated"] += 1
@@ -391,6 +413,7 @@ def run_scraping(
                     country=country_val,
                     description=None,
                     category=profile,
+                    score=score,
                 )
                 if id_company is not None:
                     totals["total_new"] += 1

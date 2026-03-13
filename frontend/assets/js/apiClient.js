@@ -70,16 +70,37 @@ export const apiClient = {
     return request('/dashboard/metrics');
   },
 
+  getDashboardStats() {
+    return request('/dashboard/stats');
+  },
+
   getDashboardAiReport() {
     return request('/dashboard/ai-report');
   },
 
-  getCompanies() {
-    return request('/companies');
+  getCompaniesTop() {
+    return request('/companies/top');
+  },
+
+  getTechnologiesTrending() {
+    return request('/companies/technologies/trending');
+  },
+
+  getCompaniesEnriched() {
+    return request('/companies/enriched');
+  },
+
+  getCompanies(search, tech, score) {
+    const q = new URLSearchParams();
+    if (search) q.set('search', search);
+    if (tech) q.set('tech', tech);
+    if (score) q.set('score', score);
+    const suffix = q.toString() ? '?' + q.toString() : '';
+    return request('/companies/enriched' + suffix);
   },
 
   runScraping(payload) {
-    return request('/scraping/run', {
+    return request('/scraping/start', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

@@ -7,6 +7,25 @@ from backend.db.connection import execute_query
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
+@router.get("/stats")
+def get_dashboard_stats():
+    """Stats for KPIs: total_companies, scored_companies, high_score_companies, emails_sent."""
+    total = execute_query("SELECT COUNT(*) AS c FROM company")
+    scored = execute_query("SELECT COUNT(*) AS c FROM company WHERE score IS NOT NULL")
+    high = execute_query("SELECT COUNT(*) AS c FROM company WHERE score = 3")
+    emails = execute_query("SELECT COUNT(*) AS c FROM emails WHERE send_status = 'sent'")
+
+    def n(q, default=0):
+        return int(q[0]["c"]) if q and len(q) > 0 else default
+
+    return {
+        "total_companies": n(total),
+        "scored_companies": n(scored),
+        "high_score_companies": n(high),
+        "emails_sent": n(emails),
+    }
+
+
 @router.get("/metrics")
 def get_dashboard_metrics():
     """Aggregate counts for KPI cards and charts."""
