@@ -4,13 +4,25 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from backend.db.connection import execute_query, get_db_info
 from . import normalizer
+from . import job_filters
 from .sources import example_source
+from .sources import remoteok
+from .sources import remotive
+from .sources import getonboard
+
+SCRAPERS = {
+    "example_source": example_source.scrape,
+    "remoteok": remoteok.scrape,
+    "remotive": remotive.scrape,
+    "getonboard": getonboard.scrape,
+}
 
 
 def _safe_company_contract(raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -36,9 +48,55 @@ def _normalize_nit(nit: Optional[str]) -> Optional[str]:
     """Return digits-only NIT or None if empty."""
     if nit is None:
         return None
-    import re
     digits = re.sub(r"\D", "", str(nit))
     return digits if digits else None
+
+
+def normalize_technology_name(name: str) -> str:
+    """Normalize tech name for technologies.name_normalization: lower, strip, collapse spaces."""
+    if not name or not isinstance(name, str):
+        return ""
+    return re.sub(r"\s+", " ", name.strip().lower()).strip()
+
+
+def upsert_technology(name: str) -> Optional[int]:
+    """
+    Insert technology if not exists (by name_normalization), return id_tech.
+    Uses ON CONFLICT DO NOTHING and then SELECT to get id_tech.
+    """
+    norm = normalize_technology_name(name)
+    if not norm:
+        return None
+    display_name = (name.strip() or norm)[:100]
+    execute_query(
+        """
+        INSERT INTO technologies (name_tech, name_normalization)
+        VALUES (%s, %s)
+        ON CONFLICT (name_normalization) DO NOTHING
+        """,
+        (display_name, norm),
+        fetch=False,
+    )
+    rows = execute_query(
+        "SELECT id_tech FROM technologies WHERE name_normalization = %s LIMIT 1",
+        (norm,),
+    )
+    if rows and len(rows) > 0:
+        return int(rows[0]["id_tech"])
+    return None
+
+
+def link_company_technology(id_company: int, id_tech: int) -> None:
+    """Insert company_technologies if not exists (no duplicate relations)."""
+    execute_query(
+        """
+        INSERT INTO company_technologies (id_company, id_tech)
+        VALUES (%s, %s)
+        ON CONFLICT (id_company, id_tech) DO NOTHING
+        """,
+        (id_company, id_tech),
+        fetch=False,
+    )
 
 
 def find_existing_company(
@@ -85,12 +143,14 @@ def insert_company(
     url: Optional[str],
     country: Optional[str],
     description: Optional[str] = None,
-) -> bool:
-    """Insert a new company. id_status is set by DB trigger."""
-    res = execute_query(
+    category: Optional[str] = None,
+) -> Optional[int]:
+    """Insert a new company. id_status set by DB trigger. Returns id_company or None."""
+    rows = execute_query(
         """
-        INSERT INTO company (nit, name, name_normalization, sector, email, phone, url, country, description)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO company (nit, name, name_normalization, sector, email, phone, url, country, description, category)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id_company
         """,
         (
             nit or None,
@@ -102,10 +162,13 @@ def insert_company(
             url or None,
             (country or "").strip() or None,
             description or None,
+            (category or "").strip() or None,
         ),
-        fetch=False,
+        fetch=True,
     )
-    return res is True
+    if rows and len(rows) > 0:
+        return int(rows[0]["id_company"])
+    return None
 
 
 def update_company(
@@ -116,8 +179,9 @@ def update_company(
     phone: Optional[str],
     url: Optional[str],
     description: Optional[str],
+    category: Optional[str] = None,
 ) -> bool:
-    """Update only empty fields with new values."""
+    """Update only empty fields with new values (including category)."""
     updates: List[str] = []
     params: List[Any] = []
     for field, new_val in [
@@ -126,6 +190,7 @@ def update_company(
         ("phone", phone),
         ("url", url),
         ("description", description),
+        ("category", category),
     ]:
         cur = existing.get(field)
         is_empty = cur is None or (isinstance(cur, str) and cur.strip() == "")
@@ -228,10 +293,10 @@ def run_scraping(
 
     # 1) Execute scraper
     try:
-        if source_name == "example_source":
-            companies = example_source.scrape()
-        else:
+        scraper = SCRAPERS.get(source_name)
+        if scraper is None:
             raise ValueError(f"Unknown source: {source_name}")
+        companies = scraper()
     except Exception as e:
         totals["total_found"] = 0
         totals["total_failed"] = 1
@@ -260,10 +325,37 @@ def run_scraping(
             result["errors"] = [f"scrape_error: {repr(e)}"]
         return result
 
+    only_riwi_relevant = parameters.get("only_riwi_relevant", True)
+    require_junior_focus = parameters.get("require_junior_focus", False)
+    max_items = parameters.get("max_items", 30)
+    if isinstance(max_items, int) and max_items > 0:
+        companies = companies[:max_items]
     totals["total_found"] = len(companies)
 
     for idx, raw in enumerate(companies):
         try:
+            raw_job = {
+                "job_title": raw.get("job_title") or raw.get("position") or raw.get("title"),
+                "job_category": raw.get("job_category") or raw.get("category"),
+                "job_description": raw.get("job_description") or raw.get("description"),
+                "tags": raw.get("tags") or raw.get("technologies"),
+                "technologies": raw.get("technologies"),
+            }
+            if only_riwi_relevant and not job_filters.is_riwi_relevant_job(
+                raw_job,
+                only_riwi_relevant=True,
+                require_junior_focus=require_junior_focus,
+            ):
+                continue
+
+            profile = job_filters.extract_profile_from_job(raw_job)
+            tech_names = job_filters.extract_technologies_from_job(raw_job)
+            if not tech_names and isinstance(raw.get("technologies"), list):
+                for t in raw["technologies"]:
+                    if t and isinstance(t, str) and normalize_technology_name(t):
+                        tech_names.append(normalize_technology_name(t))
+            tech_names = list(dict.fromkeys(tech_names))
+
             safe = _safe_company_contract(raw)
             name_norm = normalizer.normalize_name(safe.get("name"))
             safe["name_normalization"] = name_norm
@@ -275,7 +367,7 @@ def run_scraping(
             existing = find_existing_company(nit_clean, country_val, name_norm)
 
             if existing:
-                ok = update_company(
+                update_company(
                     id_company=existing["id_company"],
                     existing=existing,
                     sector=safe.get("sector"),
@@ -283,14 +375,12 @@ def run_scraping(
                     phone=safe.get("phone"),
                     url=safe.get("url"),
                     description=None,
+                    category=profile,
                 )
-                if ok:
-                    totals["total_updated"] += 1
-                else:
-                    totals["total_failed"] += 1
-                    errors.append(f"item_{idx}_update_failed")
+                id_company = existing["id_company"]
+                totals["total_updated"] += 1
             else:
-                ok = insert_company(
+                id_company = insert_company(
                     nit=nit_clean or safe.get("nit"),
                     name=safe.get("name") or "",
                     name_normalization=name_norm,
@@ -300,12 +390,22 @@ def run_scraping(
                     url=safe.get("url"),
                     country=country_val,
                     description=None,
+                    category=profile,
                 )
-                if ok:
+                if id_company is not None:
                     totals["total_new"] += 1
                 else:
                     totals["total_failed"] += 1
                     errors.append(f"item_{idx}_insert_failed")
+                    continue
+
+            for tech_name in tech_names:
+                norm = normalize_technology_name(tech_name)
+                if not norm:
+                    continue
+                id_tech = upsert_technology(tech_name)
+                if id_tech is not None:
+                    link_company_technology(id_company, id_tech)
         except Exception as e:
             totals["total_failed"] += 1
             errors.append(f"item_{idx}_error: {repr(e)}")

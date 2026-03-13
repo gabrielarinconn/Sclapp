@@ -19,6 +19,7 @@ openai
 # HTTP & scraping
 requests
 beautifulsoup4
+lxml
 
 # Email (Brevo / Sendinblue)
 sib-api-v3-sdk

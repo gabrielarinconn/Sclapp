@@ -20,4 +20,6 @@ def get_settings():
         "secret_key": os.getenv("SECRET_KEY", "dev-secret-change-in-production"),
         "refresh_secret_key": os.getenv("REFRESH_SECRET_KEY", os.getenv("SECRET_KEY", "dev-secret-change-in-production")),
         "cookie_secure": os.getenv("COOKIE_SECURE", "false").lower() in ("1", "true", "yes"),
+        "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        "openai_model": os.getenv("OPENAI_MODEL", "gpt-5-mini"),
     }
