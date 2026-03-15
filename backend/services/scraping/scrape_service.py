@@ -274,6 +274,18 @@ def insert_scraping_log(
     inserted = dict(rows[0])
     print(f"[scraping_log] INSERT OK: id_scraping={inserted.get('id_scraping')} source={source} execution_status={execution_status}")
 
+QUERY_SYNONYMS = {
+    "python": ["python", "django", "flask", "fastapi"],
+    "react": ["react", "react.js", "frontend", "javascript", "typescript"],
+    "javascript": ["javascript", "js", "typescript", "node", "node.js", "react", "vue", "angular"],
+    "qa": ["qa", "quality assurance", "testing", "test engineer", "automation tester", "selenium", "playwright"],
+    "devops": ["devops", "dev ops", "sre", "site reliability", "docker", "kubernetes", "aws", "linux"],
+    "data": ["data", "data analyst", "data engineer", "data scientist", "etl", "elt", "sql", "pandas", "analytics"],
+    "ai": ["ai", "artificial intelligence", "machine learning", "ml", "llm", "genai", "openai", "langchain"],
+    "automation": ["automation", "workflow automation", "process automation", "n8n", "zapier", "make", "power automate"],
+    "backend": ["backend", "back-end", "server-side", "api", "python", "java", "node", "fastapi", "spring"],
+    "frontend": ["frontend", "front-end", "react", "vue", "angular", "javascript", "typescript", "ui"],
+}
 
 def run_scraping(
     parameters: Optional[Dict[str, Any]] = None,
@@ -284,7 +296,6 @@ def run_scraping(
     Orchestrator: run scraper, normalize, deduplicate against PostgreSQL,
     insert/update company, then insert scraping_log. Returns public result dict.
     """
-    start_ts = datetime.utcnow().isoformat() + "Z"
     t0 = time.perf_counter()
     totals = {"total_found": 0, "total_new": 0, "total_updated": 0, "total_failed": 0}
     errors: List[str] = []
@@ -336,12 +347,50 @@ def run_scraping(
 
     only_riwi_relevant = parameters.get("only_riwi_relevant", True)
     require_junior_focus = parameters.get("require_junior_focus", False)
-    max_items = parameters.get("max_items", 30)
-    if isinstance(max_items, int) and max_items > 0:
-        companies = companies[:max_items]
-    totals["total_found"] = len(companies)
+    max_items = parameters.get("max_items", 20)
 
-    for idx, raw in enumerate(companies):
+    query = (parameters.get("query") or "").strip().lower()
+
+    filtered_companies = []
+
+    for raw in companies:
+        raw_job_preview = {
+            "job_title": raw.get("job_title") or raw.get("position") or raw.get("title"),
+            "job_category": raw.get("job_category") or raw.get("category"),
+            "job_description": raw.get("job_description") or raw.get("description"),
+            "tags": raw.get("tags") or raw.get("technologies"),
+        }
+
+        if query:
+            searchable_text = " ".join([
+                str(raw_job_preview.get("job_title") or ""),
+                str(raw_job_preview.get("job_category") or ""),
+                str(raw_job_preview.get("job_description") or ""),
+                " ".join(raw_job_preview.get("tags") or []) if isinstance(raw_job_preview.get("tags"), list) else str(raw_job_preview.get("tags") or "")
+            ]).lower()
+
+
+            terms = QUERY_SYNONYMS.get(query, [query])
+
+            matched = False
+            for term in terms:
+                pattern = r"\b" + re.escape(term.lower()) + r"\b"
+                if re.search(pattern, searchable_text, re.IGNORECASE):
+                    matched = True
+                    break
+
+            if not matched:
+                continue
+
+
+        filtered_companies.append(raw)
+
+    if isinstance(max_items, int) and max_items > 0:
+        filtered_companies = filtered_companies[:max_items]
+
+    totals["total_found"] = len(filtered_companies)
+
+    for idx, raw in enumerate(filtered_companies):
         
         try:
             raw_job = {
@@ -353,6 +402,7 @@ def run_scraping(
                 "technologies": raw.get("technologies"),
                 "source": raw.get("source"),
             }
+
             if only_riwi_relevant and not job_filters.is_riwi_relevant_job(
                 raw_job,
                 only_riwi_relevant=True,
@@ -372,9 +422,20 @@ def run_scraping(
                 if not ai_result.get("is_relevant"):
                     continue
                 profile = ai_result.get("profile") or profile
-                score = ai_result.get("score")
+                raw_score = ai_result.get("score")
+                if raw_score is not None:
+                    try:
+                        score = int(raw_score)
+                        if score not in (1, 2, 3):
+                            score = None
+                    except (TypeError, ValueError):
+                        score = None
+                else:
+                    score = None
                 if ai_result.get("technologies"):
                     tech_names = [str(t).strip().lower() for t in ai_result["technologies"] if t]
+                print("AI RESULT:", ai_result)
+                print("PROFILE:", profile, "SCORE:", score, "TECHS:", tech_names[:5] if tech_names else [])
             tech_names = list(dict.fromkeys(tech_names))
 
             safe = _safe_company_contract(raw)

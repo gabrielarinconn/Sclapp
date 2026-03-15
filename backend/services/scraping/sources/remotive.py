@@ -1,21 +1,21 @@
 """
 Remotive source: fetch jobs from https://remotive.com/api/remote-jobs and map each job to a company.
 Contract: name, nit, email, phone, url, country, sector, technologies, source, source_url.
-MVP: max 30 items per run.
+MVP: max 100 items per run.
 """
 
 import requests
 from typing import Any
 
 USER_AGENT = "Sclapp/1.0 (scraping; +https://github.com/sclapp)"
-MAX_ITEMS = 30
+MAX_ITEMS = 100
 API_URL = "https://remotive.com/api/remote-jobs"
 
 
 def scrape() -> list[dict[str, Any]]:
     """
     Fetch Remotive API and return a list of company dicts (one per job).
-    Maps: company_name -> name, url -> url, category -> sector, technologies = [category] or [].
+    Maps: company_name -> name, url -> url, category -> sector, technologies = tags when available.
     """
     resp = requests.get(
         API_URL,

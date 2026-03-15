@@ -81,8 +81,8 @@ export function renderCompaniesView(main) {
             </select>
           </div>
           <div class="form-group">
-            <label>Target technology / role</label>
-            <input type="text" class="filtro-input" style="width:100%;" placeholder="e.g. Senior React Developer" id="scrapingQuery" />
+            <label>Target technology / role (optional)</label>
+            <input type="text" class="filtro-input" style="width:100%;" placeholder="e.g. e.g. python, react, data (optional)" id="scrapingQuery" />
           </div>
           <div id="scrapingStatus" style="margin-top:15px;"></div>
         </div>
@@ -90,7 +90,7 @@ export function renderCompaniesView(main) {
           <button class="btn-cancelar" id="btnCancelScraping">Cancel</button>
           <button class="btn-primario" id="btnStartScraping">Start search</button>
         </div>
-      </div>
+      </div>Developer
     </div>
   `;
 
@@ -211,14 +211,10 @@ export function renderCompaniesView(main) {
     const statusEl = document.getElementById('scrapingStatus');
     const query = queryEl?.value?.trim() || '';
   
-    if (!query) {
-      window.alert('Please enter a search term.');
-      return;
-    }
   
     statusEl.innerHTML = `
       <div style="padding:15px;background:rgba(45,212,191,0.05);border:1px dashed #2dd4bf44;border-radius:8px;text-align:center;">
-        <p style="color:#2dd4bf;font-size:13px;margin-bottom:5px;">⏳ Searching vacancies for "${query}"...</p>
+        <p style="color:#2dd4bf;font-size:13px;margin-bottom:5px;">⏳ Searching vacancies ${query ? `for "${query}"` : "(general search)"}...</p>
         <div style="width:100%;height:3px;background:#1a2535;border-radius:10px;overflow:hidden;">
           <div id="scrapingBar" style="width:0;height:100%;background:#2dd4bf;transition:width 3s linear;"></div>
         </div>
@@ -236,7 +232,8 @@ export function renderCompaniesView(main) {
       result = await apiClient.runScraping({
         parameters: {
           source: document.getElementById('scrapingSource')?.value || 'remotive',
-          max_items: 5,
+          query,
+          max_items: 30,
           only_riwi_relevant: true,
           require_junior_focus: false
         }
@@ -250,8 +247,11 @@ export function renderCompaniesView(main) {
           </p>
         </div>
       `;
+
+      if (result?.total_new > 0 || result?.total_updated > 0) {
+        loadTechnologyOptions();
+      }
   
-      loadTechnologyOptions();
       loadCompanies();
     } catch (error) {
       statusEl.innerHTML = `

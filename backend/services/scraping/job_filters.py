@@ -8,16 +8,70 @@ from typing import Any
 
 # --- Señales de roles tech (aceptar) ---
 RIWI_ACCEPT_SIGNALS = [
-    "software", "developer", "frontend", "backend", "fullstack", "full stack",
-    "data", "qa", "testing", "devops", "engineer", "support engineer",
-    "web developer", "mobile developer", "app developer",
+    # Software general
+    "software developer", "software engineer", "developer", "backend", "frontend",
+    "fullstack", "full stack", "web developer", "mobile developer", "app developer",
+    "application engineer", "application developer", "platform engineer", "cloud engineer",
+
+    # QA / testing
+    "qa", "qa engineer", "quality assurance", "testing", "test engineer", "automation tester",
+
+    # DevOps / infra
+    "devops", "dev ops", "site reliability", "sre", "infrastructure", "cloud", "platform engineer",
+
+    # Data / analytics
+    "data analyst", "data analytics", "business intelligence", "data engineer", "data engineering",
+    "data pipeline", "etl", "elt", "data scientist", "data science",
+
+    # AI / ML
+    "machine learning", "machine learning engineer", "ml engineer", "artificial intelligence",
+    "generative ai", "genai", "llm", "predictive model",
+
+    # Automatización
+    "ai automation", "workflow automation", "process automation", "automation engineer",
+    "automation developer", "chatbot", "agentic workflow", "n8n", "zapier", "make",
+
+    # Soporte técnico válido
+    "support engineer", "technical support engineer"
 ]
 
-# --- Señales de exclusión (roles no alineados o seniority alta) ---
+# --- Señales de exclusión: solo roles claramente no tech (no descartar senior/lead si es tech) ---
 RIWI_EXCLUDE_SIGNALS = [
-    "senior", "sr.", "sr ", "lead", "principal", "staff", "manager",
-    "director", "marketing", "sales", "recruiter", "hr ", " hr", "human resources",
-    "finance", "accountant", "legal", "executive", "vp ", " vp", "chief",
+    "marketing",
+    "sales",
+    "account executive",
+    "sales executive",
+    "business development",
+    "recruiter",
+    "recruitment",
+    "talent acquisition",
+    "human resources",
+    "hr",
+    "people operations",
+    "finance",
+    "financial analyst",
+    "accountant",
+    "legal",
+    "attorney",
+    "lawyer",
+    "customer success",
+    "customer support",
+    "support specialist",
+    "operations",
+    "administrative",
+    "office manager",
+    "executive assistant",
+    "chief marketing officer",
+    "chief financial officer",
+    "vp marketing",
+    "vp sales",
+    "content creator",
+    "copywriter",
+    "seo",
+    "social media",
+    "community manager",
+    "product marketing",
+    "partnerships",
 ]
 
 # --- Señales de preferencia (junior / entry) ---
@@ -32,29 +86,68 @@ PROFILE_OPTIONS = [
     "Frontend Developer",
     "Full Stack Developer",
     "Data Analyst",
+    "Data Engineer",
+    "Data Scientist",
     "QA Engineer",
     "DevOps Engineer",
+    "AI Automation Specialist",
+    "Machine Learning Specialist",
     "Software Developer",
 ]
 
 # --- Mapeo título/etiquetas -> perfil ---
 PROFILE_KEYWORDS = [
-    (["backend", "back-end", "back end"], "Backend Developer"),
-    (["frontend", "front-end", "front end", "frontend developer", "react", "vue", "angular"], "Frontend Developer"),
+    # Software
+    (["backend", "back-end", "back end", "api developer", "server-side"], "Backend Developer"),
+    (["frontend", "front-end", "front end", "react", "vue", "angular", "ui developer"], "Frontend Developer"),
     (["fullstack", "full-stack", "full stack"], "Full Stack Developer"),
-    (["data analyst", "data analysis", "analytics", "power bi", "pandas", "bi "], "Data Analyst"),
-    (["qa", "quality assurance", "test engineer", "selenium", "playwright", "testing"], "QA Engineer"),
-    (["devops", "dev ops", "sre", "infrastructure"], "DevOps Engineer"),
+
+    # QA
+    (["qa", "quality assurance", "test engineer", "automation tester", "selenium", "playwright", "testing"], "QA Engineer"),
+
+    # DevOps
+    (["devops", "dev ops", "sre", "site reliability", "platform engineer", "cloud engineer", "infrastructure"], "DevOps Engineer"),
+
+    # Data
+    (["data analyst", "data analysis", "analytics", "business intelligence", "power bi", "tableau", "bi"], "Data Analyst"),
+    (["data engineer", "data engineering", "etl", "elt", "data pipeline", "airflow", "dbt"], "Data Engineer"),
+    (["data scientist", "data science", "machine learning", "ml", "predictive model", "model training"], "Data Scientist"),
+
+    # AI / automation
+    (["ai automation", "automation", "workflow automation", "process automation", "n8n", "zapier", "make", "chatbot", "automator"], "AI Automation Specialist"),
+    (["machine learning specialist", "ml engineer", "artificial intelligence", "llm", "genai", "generative ai"], "Machine Learning Engineer"),
 ]
 
 # --- Tecnologías conocidas (para extracción) ---
 KNOWN_TECHNOLOGIES = [
+    # Lenguajes
     "python", "javascript", "typescript", "java", "c#", "c++", "php", "ruby",
-    "go", "golang", "rust", "node", "node.js", "nodejs", "react", "vue", "angular",
-    "django", "flask", "fastapi", "spring", "laravel", "postgresql", "mysql",
-    "mongodb", "docker", "kubernetes", "k8s", "aws", "azure", "gcp", "git",
-    "linux", "selenium", "playwright", "pandas", "power bi", "excel", "sql",
-    "html", "css", "redux", "next.js", "nestjs", "graphql", "rest", "api",
+    "go", "golang", "rust", "sql",
+
+    # Backend / frontend
+    "node", "node.js", "nodejs", "react", "vue", "angular",
+    "django", "flask", "fastapi", "spring", "laravel", "nestjs", "next.js",
+    "html", "css", "redux", "graphql",
+
+    # Bases de datos
+    "postgresql", "mysql", "mongodb", "redis", "snowflake", "bigquery",
+
+    # Infra
+    "docker", "kubernetes", "k8s", "aws", "azure", "gcp", "linux", "git",
+
+    # QA
+    "selenium", "playwright", "cypress", "pytest", "postman",
+
+    # Data
+    "pandas", "numpy", "power bi", "tableau", "airflow", "dbt", "spark", "hadoop",
+
+    # AI / ML
+    "tensorflow", "pytorch", "scikit-learn", "openai", "langchain", "llamaindex",
+
+    # Automatización
+    "n8n", "zapier", "make", "power automate",
+
+    "keras", "xgboost", "pyspark", "databricks", "looker", "superset", "prefect", "azure devops", "github"
 ]
 
 
@@ -93,11 +186,12 @@ def is_riwi_relevant_job(
     require_junior_focus: bool = False,
 ) -> bool:
     """
-    Evalúa si la vacante es relevante para Riwi (roles tech, preferencia junior).
+    Evalúa si la vacante es relevante para Riwi (roles tech).
     Usa título, categoría, tags y descripción si existen.
-    - Acepta si hay señales de roles tech.
-    - Excluye si hay señales de seniority alta o roles no alineados.
-    - Opcional: dar preferencia a junior/trainee/internship (require_junior_focus).
+    - Acepta si hay señales de roles tech (developer, engineer, etc.).
+    - Excluye solo roles claramente no tech (marketing, sales, recruiter, hr, finance, etc.).
+    - No se excluye por seniority (senior/lead/manager tech pasan); el score de IA diferencia.
+    - Opcional: require_junior_focus exige señales junior para aceptar.
     """
     if not only_riwi_relevant:
         return True
