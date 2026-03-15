@@ -48,7 +48,7 @@ export function renderDashboardView(main) {
         </div>
       </div>
 
-      <!-- Consultas relevantes: top empresas + tecnologías -->
+      <!-- Top companies and trending technologies -->
       <div class="graficas-row" style="margin-bottom:20px;">
         <div class="grafica-card" style="flex:1;">
           <span class="grafica-titulo">Top companies by score</span>

@@ -1,91 +1,98 @@
-# Cómo ejecutar el proyecto SCLAPP
+# How to run SCLAPP
 
-Guía paso a paso para levantar el backend (FastAPI), la base de datos (PostgreSQL) y el frontend.
-
----
-
-## Requisitos previos
-
-- **Python 3.10+** instalado y en el PATH.
-- **PostgreSQL** instalado y en ejecución (puerto 5432 por defecto).
-- Editor o terminal en la **raíz del proyecto** (carpeta donde están `backend/` y `frontend/`).
+Step-by-step guide to run the backend (FastAPI), database (PostgreSQL), and frontend.
 
 ---
 
-## Paso 1: Clonar o abrir el proyecto
+## 1. Project requirements
 
-Abre la carpeta del proyecto en tu editor o terminal:
+- **Python 3.10+** installed and on your PATH.
+- **PostgreSQL** installed and running (default port 5432).
+- A terminal or editor at the **project root** (the folder that contains `backend/` and `frontend/`).
+
+---
+
+## 2. Clone the repository
+
+Clone or open the project and go to its root:
 
 ```bash
-cd ruta/donde/esta/Sclapp
+cd path/to/Sclapp
 ```
 
-La raíz debe contener las carpetas `backend` y `frontend`.
+The root must contain the `backend` and `frontend` folders.
 
 ---
 
-## Paso 2: Crear la base de datos en PostgreSQL
+## 3. Create the database in PostgreSQL
 
-1. Abre **pgAdmin**, **psql** o cualquier cliente de PostgreSQL.
-2. Crea una base de datos nueva (por ejemplo `sclapp`):
+1. Open **pgAdmin**, **psql**, or any PostgreSQL client.
+2. Create a new database (for example `sclapp`):
 
    ```sql
    CREATE DATABASE sclapp;
    ```
 
-3. Conéctate a esa base de datos y ejecuta el script de esquema:
+3. Connect to that database and run the schema script:
 
-   - Archivo: `backend/db/schema.sql`
-   - En psql: `\i ruta/completa/backend/db/schema.sql`
-   - O copia y pega el contenido del archivo en la consola SQL.
+   - File: `backend/db/schema.sql`
+   - In psql: `\i full/path/to/backend/db/schema.sql`
+   - Or copy and paste the file contents into the SQL console.
 
-4. (Opcional) Para probar el login con un usuario de ejemplo, inserta un usuario (ajusta el `password_hash` si más adelante implementas verificación real):
+4. (Optional) To test login with a sample user, insert a user (adjust `password_hash` if you use real verification later):
 
    ```sql
    INSERT INTO users (full_name, doc_num, user_name, password_hash, email, id_role)
-   VALUES ('Admin', '123', 'admin', 'hash_aqui', 'admin@sclapp.com', 1)
+   VALUES ('Admin', '123', 'admin', 'hash_here', 'admin@sclapp.com', 1)
    ON CONFLICT (email) DO NOTHING;
    ```
 
-   Si no creas usuarios, el login de prueba del frontend (usuario falso) seguirá funcionando.
+   If you do not create users, the frontend test login (fake user) may still be used for demo.
 
 ---
 
-## Paso 3: Variables de entorno (.env)
+## 4. Environment variables (.env)
 
-1. En la **raíz del proyecto** (o dentro de `backend/`) crea un archivo llamado `.env`.
+1. In the **project root** (or inside `backend/`) create a file named `.env`.
 
-2. Añade al menos estas variables (ajusta según tu instalación de PostgreSQL):
+2. Add at least these variables (adjust for your PostgreSQL setup):
 
    ```env
    DB_HOST=localhost
    DB_PORT=5432
    DB_NAME=sclapp
    DB_USER=postgres
-   DB_PASSWORD=tu_contraseña_postgres
+   DB_PASSWORD=your_postgres_password
    ```
 
-3. Opcional, si sirves el frontend en otro puerto (por ejemplo Live Server en 5500):
+3. Optional: if you serve the frontend on another port (e.g. Live Server on 5500):
 
    ```env
    CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000
    ```
 
-Guarda el archivo. No subas `.env` a Git (debe estar en `.gitignore`).
+4. For authentication and optional features, you can add (see `.env.example` for more):
+
+   ```env
+   SECRET_KEY=your_secret_key_here
+   OPENAI_API_KEY=your_openai_key_here
+   ```
+
+Save the file. Do not commit `.env` to Git (it should be in `.gitignore`).
 
 ---
 
-## Paso 4: Entorno virtual e instalación de dependencias (backend)
+## 5. Virtual environment and dependencies (backend)
 
-1. Abre una terminal en la **raíz del proyecto**.
+1. Open a terminal at the **project root**.
 
-2. Crea el entorno virtual:
+2. Create the virtual environment:
 
    ```bash
    python -m venv venv
    ```
 
-3. Actívalo:
+3. Activate it:
 
    - **Windows (CMD):**  
      `venv\Scripts\activate`
@@ -94,9 +101,9 @@ Guarda el archivo. No subas `.env` a Git (debe estar en `.gitignore`).
    - **Linux / macOS:**  
      `source venv/bin/activate`
 
-   Deberías ver `(venv)` al inicio de la línea.
+   You should see `(venv)` at the start of the line.
 
-4. Instala las dependencias del backend:
+4. Install backend dependencies:
 
    ```bash
    pip install -r backend/requirements.txt
@@ -104,48 +111,45 @@ Guarda el archivo. No subas `.env` a Git (debe estar en `.gitignore`).
 
 ---
 
-## Paso 5: Levantar todo con un solo comando
+## 6. Start the server
 
-Con el entorno virtual activado y desde la **raíz del proyecto**:
+With the virtual environment active and from the **project root**:
 
 ```bash
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-- **Correcto:** verás algo como `Uvicorn running on http://0.0.0.0:8000`.
-- **Una sola URL:** abre en el navegador **http://localhost:8000** — ahí se sirve la aplicación (frontend + API).
-- La API está en: **http://localhost:8000/api**
-- Documentación interactiva: **http://localhost:8000/docs**
-- Deja esta terminal abierta mientras uses la app.
+- **Success:** you should see something like `Uvicorn running on http://0.0.0.0:8000`.
+- **Single URL:** open **http://localhost:8000** in your browser — the app (frontend + API) is served there.
+- **API:** **http://localhost:8000/api**
+- **Interactive docs:** **http://localhost:8000/docs**
 
-El mismo servidor sirve el frontend (HTML, CSS, JS) y la API; no hace falta abrir otra terminal ni otro puerto.
-
----
-
-## Paso 6: Probar la aplicación
-
-1. Con el servidor corriendo, abre en el navegador: **http://localhost:8000**
-2. Deberías ver la pantalla de login de SCLAPP.
-3. Usa (usuario de prueba del frontend):
-   - **Email:** `admin@sclapp.com`
-   - **Contraseña:** `123456`
-4. Entra al dashboard y navega por Companies, Emails, Profile, etc.
+Keep this terminal open while you use the app. The same server serves the frontend (HTML, CSS, JS) and the API; you do not need another terminal or port.
 
 ---
 
-## Resumen rápido
+## 7. Use the application
 
-| Qué   | Dónde ejecutar    | Comando |
-|-------|-------------------|--------|
-| Todo (API + frontend) | Raíz del proyecto | `uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000` |
-
-Luego abre **http://localhost:8000** en el navegador. 
+1. With the server running, open in your browser: **http://localhost:8000**
+2. You should see the SCLAPP login screen.
+3. Use your registered user, or the test user if you inserted one (e.g. email: `admin@sclapp.com`, password: as set in DB).
+4. Go to the dashboard and navigate to Companies, Profile, etc.
 
 ---
 
-## Errores frecuentes
+## Quick summary
 
-- **Base de datos:** Si el backend falla al arrancar, comprueba que PostgreSQL esté en marcha, que la base `sclapp` exista y que `DB_*` en `.env` sean correctos.
-- **Módulos no encontrados:** Asegúrate de ejecutar `uvicorn` desde la **raíz del proyecto** (donde está la carpeta `backend/`), no desde dentro de `backend/`.
-- **Frontend en blanco:** Abre **http://localhost:8000** en el navegador, no el archivo `index.html` con doble clic (`file://`).
-- **CORS:** Si más adelante sirves el frontend en otro puerto, añade esa URL en `CORS_ORIGINS` en tu `.env`.
+| What              | Where to run     | Command |
+|-------------------|------------------|--------|
+| All (API + frontend) | Project root | `uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000` |
+
+Then open **http://localhost:8000** in your browser.
+
+---
+
+## Common issues
+
+- **Database:** If the backend fails to start, check that PostgreSQL is running, that the `sclapp` database exists, and that `DB_*` in `.env` are correct.
+- **Modules not found:** Run `uvicorn` from the **project root** (where the `backend/` folder is), not from inside `backend/`.
+- **Blank frontend:** Open **http://localhost:8000** in the browser, not the `index.html` file with double-click (`file://`).
+- **CORS:** If you serve the frontend on another port later, add that URL to `CORS_ORIGINS` in your `.env`.

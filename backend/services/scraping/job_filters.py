@@ -6,7 +6,7 @@ Used before persisting companies from job-based sources (remoteok, remotive).
 import re
 from typing import Any
 
-# --- Señales de roles tech (aceptar) ---
+# --- Tech role signals (accept) ---
 RIWI_ACCEPT_SIGNALS = [
     # Software general
     "software developer", "software engineer", "developer", "backend", "frontend",
@@ -27,15 +27,15 @@ RIWI_ACCEPT_SIGNALS = [
     "machine learning", "machine learning engineer", "ml engineer", "artificial intelligence",
     "generative ai", "genai", "llm", "predictive model",
 
-    # Automatización
+    # Automation
     "ai automation", "workflow automation", "process automation", "automation engineer",
     "automation developer", "chatbot", "agentic workflow", "n8n", "zapier", "make",
 
-    # Soporte técnico válido
+    # Valid technical support
     "support engineer", "technical support engineer"
 ]
 
-# --- Señales de exclusión: solo roles claramente no tech (no descartar senior/lead si es tech) ---
+# --- Exclusion signals: only clearly non-tech roles (do not discard senior/lead if tech) ---
 RIWI_EXCLUDE_SIGNALS = [
     "marketing",
     "sales",
@@ -74,13 +74,13 @@ RIWI_EXCLUDE_SIGNALS = [
     "partnerships",
 ]
 
-# --- Señales de preferencia (junior / entry) ---
+# --- Preference signals (junior / entry) ---
 RIWI_JUNIOR_SIGNALS = [
     "junior", "trainee", "internship", "intern ", " apprentice", "apprentice",
     "entry level", "entry-level", "graduate", "associate developer",
 ]
 
-# --- Perfiles soportados (company.category) ---
+# --- Supported profiles (company.category) ---
 PROFILE_OPTIONS = [
     "Backend Developer",
     "Frontend Developer",
@@ -95,7 +95,7 @@ PROFILE_OPTIONS = [
     "Software Developer",
 ]
 
-# --- Mapeo título/etiquetas -> perfil ---
+# --- Title/tags to profile mapping ---
 PROFILE_KEYWORDS = [
     # Software
     (["backend", "back-end", "back end", "api developer", "server-side"], "Backend Developer"),
@@ -118,9 +118,9 @@ PROFILE_KEYWORDS = [
     (["machine learning specialist", "ml engineer", "artificial intelligence", "llm", "genai", "generative ai"], "Machine Learning Engineer"),
 ]
 
-# --- Tecnologías conocidas (para extracción) ---
+# --- Known technologies (for extraction) ---
 KNOWN_TECHNOLOGIES = [
-    # Lenguajes
+    # Languages
     "python", "javascript", "typescript", "java", "c#", "c++", "php", "ruby",
     "go", "golang", "rust", "sql",
 
@@ -129,7 +129,7 @@ KNOWN_TECHNOLOGIES = [
     "django", "flask", "fastapi", "spring", "laravel", "nestjs", "next.js",
     "html", "css", "redux", "graphql",
 
-    # Bases de datos
+    # Databases
     "postgresql", "mysql", "mongodb", "redis", "snowflake", "bigquery",
 
     # Infra
@@ -144,7 +144,7 @@ KNOWN_TECHNOLOGIES = [
     # AI / ML
     "tensorflow", "pytorch", "scikit-learn", "openai", "langchain", "llamaindex",
 
-    # Automatización
+    # Automation
     "n8n", "zapier", "make", "power automate",
 
     "keras", "xgboost", "pyspark", "databricks", "looker", "superset", "prefect", "azure devops", "github"
@@ -186,12 +186,12 @@ def is_riwi_relevant_job(
     require_junior_focus: bool = False,
 ) -> bool:
     """
-    Evalúa si la vacante es relevante para Riwi (roles tech).
-    Usa título, categoría, tags y descripción si existen.
-    - Acepta si hay señales de roles tech (developer, engineer, etc.).
-    - Excluye solo roles claramente no tech (marketing, sales, recruiter, hr, finance, etc.).
-    - No se excluye por seniority (senior/lead/manager tech pasan); el score de IA diferencia.
-    - Opcional: require_junior_focus exige señales junior para aceptar.
+    Evaluates whether the vacancy is relevant for Riwi (tech roles).
+    Uses title, category, tags and description when present.
+    - Accepts if there are tech role signals (developer, engineer, etc.).
+    - Excludes only clearly non-tech roles (marketing, sales, recruiter, hr, finance, etc.).
+    - Does not exclude by seniority (senior/lead/manager tech pass); AI score differentiates.
+    - Optional: require_junior_focus requires junior signals to accept.
     """
     if not only_riwi_relevant:
         return True
@@ -218,10 +218,10 @@ def is_riwi_relevant_job(
 
 def extract_profile_from_job(raw_job: dict[str, Any]) -> str | None:
     """
-    Devuelve el perfil principal detectado para company.category.
-    Opciones: Backend Developer, Frontend Developer, Full Stack Developer,
+    Returns the main profile detected for company.category.
+    Options: Backend Developer, Frontend Developer, Full Stack Developer,
     Data Analyst, QA Engineer, DevOps Engineer, Software Developer.
-    Si no hay uno claro, devuelve None o "Software Developer".
+    If none is clear, returns None or "Software Developer".
     """
     text = _text_from(
         raw_job,
@@ -241,8 +241,8 @@ def extract_profile_from_job(raw_job: dict[str, Any]) -> str | None:
 
 def extract_technologies_from_job(raw_job: dict[str, Any]) -> list[str]:
     """
-    Extrae tecnologías desde tags, category, job_title, job_description.
-    Usa lista de tecnologías conocidas; devuelve nombres normalizados (lower, sin duplicados).
+    Extracts technologies from tags, category, job_title, job_description.
+    Uses known technologies list; returns normalized names (lowercase, no duplicates).
     """
     text = _text_from(
         raw_job,

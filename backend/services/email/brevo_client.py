@@ -13,11 +13,11 @@ class BrevoClient:
 
     def send_email(self, to_email, subject, body_html):
         """
-        Envía un correo electrónico usando la API de Brevo.
+        Sends an email using the Brevo API.
         """
         if not self.api_key:
-            print("Simulación: Enviando correo (falta BREVO_API_KEY)")
-            return {"message": "Simulación exitosa", "messageId": "sim-123"}, 200
+            print("Simulation: Sending email (BREVO_API_KEY missing)")
+            return {"message": "Simulation successful", "messageId": "sim-123"}, 200
 
         headers = {
             "accept": "application/json",

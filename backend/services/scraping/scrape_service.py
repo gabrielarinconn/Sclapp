@@ -267,7 +267,7 @@ def insert_scraping_log(
     )
     if not rows or len(rows) != 1:
         raise RuntimeError(
-            f"INSERT scraping_log no devolvió una fila (RETURNING *): rows={rows!r}"
+            f"INSERT scraping_log did not return a row (RETURNING *): rows={rows!r}"
         )
     inserted = dict(rows[0])
     print(f"[scraping_log] INSERT OK: id_scraping={inserted.get('id_scraping')} source={source} execution_status={execution_status}")

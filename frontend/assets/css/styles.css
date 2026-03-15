@@ -1,6 +1,6 @@
 /* ================================================
-   styles.css — ÚNICO archivo de estilos de SCLAPP
-   Incluye: Login, Register, SPA Shell, Dashboard,
+   styles.css — Single stylesheet for SCLAPP
+   Includes: Login, Register, SPA Shell, Dashboard,
    Companies, Emails, Profile
    ================================================ */
 
@@ -20,7 +20,7 @@ body {
 }
 
 /* ================================================
-   PANTALLAS DE LOGIN Y REGISTER
+   LOGIN AND REGISTER SCREENS
    ================================================ */
 .auth-body {
   height: 100vh;

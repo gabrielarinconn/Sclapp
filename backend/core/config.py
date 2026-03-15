@@ -21,6 +21,6 @@ def get_settings():
         "refresh_secret_key": os.getenv("REFRESH_SECRET_KEY", os.getenv("SECRET_KEY", "dev-secret-change-in-production")),
         "cookie_secure": os.getenv("COOKIE_SECURE", "false").lower() in ("1", "true", "yes"),
         "openai_api_key": os.getenv("OPENAI_API_KEY"),
-        # Default estable; el clasificador de jobs usa siempre CLASSIFIER_MODEL en job_classifier.py
+        # Default model; job classifier always uses CLASSIFIER_MODEL in job_classifier.py
         "openai_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     }

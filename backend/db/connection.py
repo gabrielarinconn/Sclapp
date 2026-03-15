@@ -7,7 +7,7 @@ load_dotenv()
 
 def get_db_connection():
     """
-    Establece una conexión con la base de datos PostgreSQL.
+    Establishes a connection to the PostgreSQL database.
     """
     try:
         conn = psycopg2.connect(
@@ -19,12 +19,12 @@ def get_db_connection():
         )
         return conn
     except Exception as e:
-        print(f"Error conectando a la base de datos: {e}")
+        print(f"Error connecting to database: {e}")
         return None
 
 def get_db_info():
     """
-    Devuelve host, port y database según env (para depuración: confirmar qué DB usa el backend).
+    Returns host, port and database from env (for debugging: confirm which DB the backend uses).
     """
     return {
         "host": os.getenv("DB_HOST", "127.0.0.1"),
@@ -35,13 +35,13 @@ def get_db_info():
 
 def execute_query(query, params=None, fetch=True):
     """
-    Ejecuta una consulta SQL. Siempre hace commit tras execute para que INSERT/UPDATE persistan.
-    Si fetch=True, devuelve cur.fetchall(); si fetch=False, devuelve True.
-    En error: imprime el error, hace rollback y re-lanza la excepción (no silencia).
+    Executes a SQL query. Always commits after execute so INSERT/UPDATE persist.
+    If fetch=True, returns cur.fetchall(); if fetch=False, returns True.
+    On error: prints the error, rolls back and re-raises the exception (does not silence).
     """
     conn = get_db_connection()
     if conn is None:
-        raise RuntimeError("No se pudo conectar a la base de datos (get_db_connection devolvió None).")
+        raise RuntimeError("Could not connect to the database (get_db_connection returned None).")
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:

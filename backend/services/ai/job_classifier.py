@@ -70,7 +70,7 @@ def _validate_ai_response(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-# Modelo estable para el clasificador (JSON en message.content). No usar gpt-5-mini aquí.
+# Stable model for the classifier (JSON in message.content). Do not use gpt-5-mini here.
 CLASSIFIER_MODEL = "gpt-4o-mini"
 
 
@@ -141,11 +141,11 @@ def classify_job_with_ai(raw_job: dict[str, Any]) -> dict[str, Any] | None:
         except Exception as dump_err:
             print("[OPENAI RESPONSE DUMP]", "dump_err:", type(dump_err).__name__, str(dump_err)[:200])
 
-        # --- Extracción robusta del texto (content puede ser str o lista de partes) ---
+        # --- Robust text extraction (content may be str or list of parts) ---
         content = ""
         if response.choices:
             msg = response.choices[0].message
-            # Si content viene vacío, inspeccionar el mensaje para diagnóstico
+            # If content is empty, inspect the message for diagnostics
             raw_content = getattr(msg, "content", None)
             if raw_content is None or (isinstance(raw_content, str) and not raw_content.strip()):
                 try:
@@ -182,7 +182,7 @@ def classify_job_with_ai(raw_job: dict[str, Any]) -> dict[str, Any] | None:
                         break
                 content = content or ""
 
-        print("[OPENAI RAW CONTENT]", content[:500] + ("..." if len(content) > 500 else "") if content else "(vacío)")
+        print("[OPENAI RAW CONTENT]", content[:500] + ("..." if len(content) > 500 else "") if content else "(empty)")
         if not content:
             return None
         content = re.sub(r"^```\w*\n?", "", content)
