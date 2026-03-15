@@ -1,5 +1,13 @@
 # 🚀 SCLAPP – Smart Company Lead Analysis Platform
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![OpenAI](https://img.shields.io/badge/OpenAI-AI-orange)
+![Status](https://img.shields.io/badge/Project-MVP-success)
+
+---
+
 ## 📌 Overview
 
 SCLAPP is a system designed to help training organizations like **Riwi** identify companies that may need technology talent.
@@ -52,20 +60,48 @@ The system demonstrates a **complete end-to-end data pipeline**, from job collec
 
 # 🏗 System Architecture
 
-The application uses a simple three-layer architecture.
+### High Level Architecture
 
 ```
-Frontend (HTML / CSS / JavaScript)
-        ↓
-Backend API (FastAPI)
-        ↓
-Database (PostgreSQL)
-```
-
-Additional components:
-
-```
-Job Sources → Scraping → Filtering → AI Classification → Database → Dashboard
+                 +------------------+
+                 |   Job Sources    |
+                 | Remotive / OK    |
+                 +--------+---------+
+                          |
+                          v
+                +--------------------+
+                |     Scraping       |
+                |  Collect job data  |
+                +---------+----------+
+                          |
+                          v
+                +--------------------+
+                |   Job Filtering    |
+                |  Keyword + Rules   |
+                +---------+----------+
+                          |
+                          v
+                +--------------------+
+                |  AI Classification |
+                | OpenAI API         |
+                +---------+----------+
+                          |
+                          v
+                +--------------------+
+                |   PostgreSQL DB    |
+                | companies / tech   |
+                +---------+----------+
+                          |
+                          v
+                +--------------------+
+                |     FastAPI API    |
+                +---------+----------+
+                          |
+                          v
+                +--------------------+
+                |   Web Dashboard    |
+                | HTML / CSS / JS    |
+                +--------------------+
 ```
 
 ---
@@ -97,8 +133,6 @@ Job Sources → Scraping → Filtering → AI Classification → Database → Da
 ---
 
 # 🔄 System Workflow
-
-The system processes data in the following pipeline:
 
 ```
 Job Sources
@@ -171,18 +205,16 @@ Technologies are stored in a separate table and linked to companies through a re
 
 # 🗄 Database Structure
 
-Main database tables:
-
 ### company
 
 Stores companies detected in job postings.
 
-Fields include:
-
-- name
-- category
-- score
-- country
+| Field | Description |
+|------|-------------|
+| name | Company name |
+| category | Role category |
+| score | AI relevance score |
+| country | Job location |
 
 ---
 
@@ -201,7 +233,7 @@ Examples:
 
 ### company_technologies
 
-Relational table connecting companies with technologies.
+Many-to-many relationship between companies and technologies.
 
 ---
 
@@ -273,11 +305,13 @@ Main views:
 
 # 🔌 API Endpoints
 
-## Scraping
-
-```
-POST /api/scraping/start
-```
+| Method | Endpoint | Description |
+|------|------|------|
+| POST | `/api/scraping/start` | Start scraping process |
+| GET | `/api/dashboard/stats` | Dashboard statistics |
+| GET | `/api/companies/top` | Top companies |
+| GET | `/api/companies/enriched` | Companies list |
+| GET | `/api/companies/technologies/trending` | Trending technologies |
 
 Example request:
 
@@ -289,36 +323,6 @@ Example request:
     "max_items": 10
   }
 }
-```
-
----
-
-## Dashboard
-
-```
-GET /api/dashboard/stats
-```
-
-```
-GET /api/companies/top
-```
-
-```
-GET /api/companies/technologies/trending
-```
-
----
-
-## Companies
-
-```
-GET /api/companies/enriched
-```
-
-Example:
-
-```
-/api/companies/enriched?search=react&tech=python&score=3
 ```
 
 ---
@@ -350,6 +354,46 @@ Features:
 
 ---
 
+# 🎥 Demo
+
+
+Example locations:
+
+```
+docs/screenshots/login.png
+docs/screenshots/register.png
+docs/screenshots/dashboard.png
+docs/screenshots/companies.png
+docs/screenshots/scraping.png
+docs/screenshots/profile.png
+
+
+```
+
+---
+
+# ⚡ Quick Start
+
+```
+git clone <https://github.com/Riwi-io-Medellin/sclapp-integrative-project-hamilton.git>
+cd Sclapp
+
+python -m venv venv
+source venv/bin/activate
+
+pip install -r backend/requirements.txt
+
+uvicorn backend.main:app --reload
+```
+
+Open:
+
+```
+http://localhost:8000
+```
+
+---
+
 # ⚡ Running the Project
 
 ## Requirements
@@ -363,7 +407,7 @@ Features:
 ## 1. Clone the repository
 
 ```
-git clone <repository_url>
+git clone <https://github.com/Riwi-io-Medellin/sclapp-integrative-project-hamilton.git>
 cd Sclapp
 ```
 
@@ -465,8 +509,6 @@ Example tested scenarios:
 - API contract testing
 - relational database integrity
 
-The QA plan ensures the MVP works correctly across all core system components.
-
 ---
 
 # ⚠ Known Limitations
@@ -506,7 +548,14 @@ Possible future improvements:
 
 ---
 
-## 📜 Credits
+# 🤝 Contributing
+
+This project was developed for academic purposes.  
+External contributions are not expected, but suggestions and feedback are welcome.
+
+---
+
+# 📜 Credits
 
 This project was developed as the **Final Integrative Project for Riwi (2026)**.
 
@@ -519,3 +568,9 @@ It demonstrates a practical technical solution combining:
 - dashboard visualization
 
 to support data-driven company discovery.
+
+---
+
+# 📄 License
+
+Academic project for educational purposes.
