@@ -1,4 +1,4 @@
-# --- Entorno y secretos (nunca subir) ---
+# --- Environment and secrets (never commit) ---
 .env
 .env.local
 .env.*.local
@@ -9,6 +9,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 build/
 develop-eggs/
@@ -26,14 +29,14 @@ wheels/
 .installed.cfg
 *.egg
 
-# --- Entornos virtuales ---
+# --- Virtual environments ---
 .venv/
 venv/
 ENV/
 env/
 .virtualenv/
 
-# --- Tests y calidad ---
+# --- Tests and quality ---
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -44,7 +47,7 @@ coverage.xml
 *.cover
 .hypothesis/
 
-# --- Node (si usas npm en frontend) ---
+# --- Node (if using npm in frontend) ---
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -60,7 +63,7 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# --- Logs y temporales ---
+# --- Logs and temporary files ---
 *.log
 tmp/
 temp/

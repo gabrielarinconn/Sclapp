@@ -16,13 +16,11 @@ from backend.services.ai import job_classifier
 from .sources import example_source
 from .sources import remoteok
 from .sources import remotive
-from .sources import getonboard
 
 SCRAPERS = {
     "example_source": example_source.scrape,
     "remoteok": remoteok.scrape,
     "remotive": remotive.scrape,
-    "getonboard": getonboard.scrape,
 }
 
 

@@ -70,6 +70,10 @@ def _validate_ai_response(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# Modelo estable para el clasificador (JSON en message.content). No usar gpt-5-mini aquí.
+CLASSIFIER_MODEL = "gpt-4o-mini"
+
+
 def classify_job_with_ai(raw_job: dict[str, Any]) -> dict[str, Any] | None:
     """
     Classify job with OpenAI: is_relevant, profile, score (1-3), technologies, reason.
@@ -77,10 +81,12 @@ def classify_job_with_ai(raw_job: dict[str, Any]) -> dict[str, Any] | None:
     """
     settings = get_settings()
     api_key = settings.get("openai_api_key")
-    model = settings.get("openai_model") or "gpt-4o-mini"
+    model = CLASSIFIER_MODEL
 
     if not api_key or not str(api_key).strip():
         return None
+
+    print("[OPENAI MODEL]", model)
 
     prompt_text = _build_prompt(raw_job)
     system = (

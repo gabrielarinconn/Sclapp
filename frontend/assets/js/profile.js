@@ -1,6 +1,17 @@
-// Profile view: account settings, SMTP config, recent activity
+// Profile view: real user data from GET /profile/me
 
 import { apiClient } from './apiClient.js';
+
+function getInitials(name) {
+  if (!name || typeof name !== 'string') return '—';
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '—';
+}
 
 export function renderProfileView(main) {
   main.innerHTML = `
@@ -8,7 +19,7 @@ export function renderProfileView(main) {
       <div class="view-header">
         <div>
           <h2 class="view-title">My profile</h2>
-          <p class="view-subtitle">Account settings and SMTP configuration</p>
+          <p class="view-subtitle">Account data</p>
         </div>
       </div>
 
@@ -16,23 +27,25 @@ export function renderProfileView(main) {
         <div class="perfil-card">
           <div class="perfil-seccion-titulo">👤 Personal data</div>
           <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;padding:20px;background:#0f1720;border-radius:12px;border:1px solid #1a2535;">
-            <div class="avatar-grande" style="margin-bottom:12px;font-size:32px;width:80px;height:80px;">SC</div>
-            <span style="color:#e2e8f0;font-weight:600;font-size:16px;">sclapp User</span>
-            <span style="color:#475569;font-size:12px;">Premium Member</span>
-            <button class="btn-sm-sec" style="margin-top:12px;">Upload new photo</button>
+            <div class="avatar-grande" id="perfilAvatar" style="margin-bottom:12px;font-size:32px;width:80px;height:80px;">—</div>
+            <span style="color:#e2e8f0;font-weight:600;font-size:16px;" id="perfilDisplayName">—</span>
           </div>
           <div class="form-group">
             <label style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Full name</label>
-            <input type="text" class="input-app" value="sclapp Admin" id="perfilNombre" />
+            <input type="text" class="input-app" id="perfilNombre" placeholder="Loading…" />
           </div>
           <div class="form-group">
             <label style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Email</label>
-            <input type="email" class="input-app" value="admin@sclapp.com" id="perfilEmail" />
+            <input type="email" class="input-app" id="perfilEmail" placeholder="Loading…" />
+          </div>
+          <div class="form-group" id="perfilUserIdWrap" style="display:none;">
+            <label style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">User ID</label>
+            <input type="text" class="input-app" id="perfilUserId" readonly style="background:#0f1720;color:#94a3b8;" />
           </div>
           <button class="btn-primario" id="btnSaveProfile" style="width:100%;margin-top:15px;">Update profile</button>
         </div>
 
-        <div class="perfil-card">
+        <div class="perfil-card" style="display:none;" aria-hidden="true">
           <div class="perfil-seccion-titulo">✉ SMTP configuration</div>
           <p style="font-size:12px;color:#475569;margin-bottom:15px;">Configure your professional email to send outreach campaigns directly from SCLAPP.</p>
           <div class="form-group">
@@ -56,7 +69,7 @@ export function renderProfileView(main) {
           </div>
         </div>
 
-        <div class="perfil-card perfil-full">
+        <div class="perfil-card perfil-full" style="display:none;" aria-hidden="true">
           <div class="perfil-seccion-titulo">📋 Recent activity</div>
           <div class="reporte-lista" id="profileActivity">
             <div class="reporte-item">
@@ -80,14 +93,44 @@ export function renderProfileView(main) {
     </div>
   `;
 
+  async function loadProfile() {
+    const nameEl = document.getElementById('perfilNombre');
+    const emailEl = document.getElementById('perfilEmail');
+    const displayNameEl = document.getElementById('perfilDisplayName');
+    const avatarEl = document.getElementById('perfilAvatar');
+    const userIdWrap = document.getElementById('perfilUserIdWrap');
+    const userIdEl = document.getElementById('perfilUserId');
+    try {
+      const data = await apiClient.getProfile();
+      const name = data?.full_name || data?.name || data?.user_name || '';
+      const email = data?.email || '';
+      if (nameEl) nameEl.value = name;
+      if (emailEl) emailEl.value = email;
+      if (displayNameEl) displayNameEl.textContent = name || email || '—';
+      if (avatarEl) avatarEl.textContent = getInitials(name || email);
+      if (data?.id_user != null && userIdWrap && userIdEl) {
+        userIdWrap.style.display = 'block';
+        userIdEl.value = String(data.id_user);
+      }
+    } catch (_) {
+      if (nameEl) nameEl.placeholder = 'Could not load';
+      if (emailEl) emailEl.placeholder = 'Could not load';
+      if (displayNameEl) displayNameEl.textContent = '—';
+      if (avatarEl) avatarEl.textContent = '—';
+    }
+  }
+
+  loadProfile();
+
   document.getElementById('btnSaveProfile')?.addEventListener('click', async () => {
     const name = document.getElementById('perfilNombre')?.value?.trim();
     const email = document.getElementById('perfilEmail')?.value?.trim();
     try {
-      await apiClient.updateProfile({ name, email });
-      window.alert('Profile information updated.');
+      await apiClient.updateProfile({ name: name || undefined, email: email || undefined });
+      window.alert('Profile updated.');
+      loadProfile();
     } catch (_) {
-      window.alert('Profile information updated.');
+      window.alert('Could not update profile. Try again.');
     }
   });
 

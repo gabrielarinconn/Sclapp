@@ -48,16 +48,16 @@ export function renderCompaniesView(main) {
         </div>
       </div>
 
+      <p class="view-subtitle" style="margin-bottom:8px;margin-top:0;">Companies identified from remote job postings and scored by AI relevance.</p>
       <div class="tabla-wrapper">
         <table class="tabla">
           <thead>
             <tr>
               <th>Company</th>
               <th>Technologies</th>
-              <th>Level</th>
-              <th>City</th>
+              <th>Category</th>
+              <th>Location</th>
               <th>AI Score</th>
-              <th style="text-align:right;">Actions</th>
             </tr>
           </thead>
           <tbody id="tablaBody"></tbody>
@@ -82,7 +82,7 @@ export function renderCompaniesView(main) {
           </div>
           <div class="form-group">
             <label>Target technology / role (optional)</label>
-            <input type="text" class="filtro-input" style="width:100%;" placeholder="e.g. e.g. python, react, data (optional)" id="scrapingQuery" />
+            <input type="text" class="filtro-input" style="width:100%;" placeholder="e.g. python, react, data (optional)" id="scrapingQuery" />
           </div>
           <div id="scrapingStatus" style="margin-top:15px;"></div>
         </div>
@@ -90,7 +90,7 @@ export function renderCompaniesView(main) {
           <button class="btn-cancelar" id="btnCancelScraping">Cancel</button>
           <button class="btn-primario" id="btnStartScraping">Start search</button>
         </div>
-      </div>Developer
+      </div>
     </div>
   `;
 
@@ -104,7 +104,7 @@ export function renderCompaniesView(main) {
 
     if (filtered.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="tabla-vacia">🔍 No companies found. Run scraping or adjust filters.</td></tr>';
+        '<tr><td colspan="5" class="tabla-vacia">🔍 No companies found. Run scraping or adjust filters.</td></tr>';
       return;
     }
 
@@ -112,7 +112,6 @@ export function renderCompaniesView(main) {
       .map((e) => {
         const scoreLabel = e.scoreLabel ?? scoreToBadge(e.scoreNum);
         const scoreClass = scoreToClass(e.scoreNum);
-        const escapedName = (e.nombre || '').replace(/'/g, "\\'");
         return `
           <tr>
             <td>
@@ -125,20 +124,10 @@ export function renderCompaniesView(main) {
             <td style="color:#64748b;font-size:12px;">${e.nivel || '—'}</td>
             <td style="color:#64748b;font-size:12px;">${e.ciudad || '—'}</td>
             <td><span class="badge ${scoreClass}">${scoreLabel}</span></td>
-            <td style="text-align:right;">
-              <button class="kanban-kebab" data-company="${escapedName}">⋮</button>
-            </td>
           </tr>
         `;
       })
       .join('');
-
-    tbody.querySelectorAll('.kanban-kebab').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const name = btn.dataset.company || '';
-        window.alert(`Options for ${name} (Contact, View details, Ignore)`);
-      });
-    });
   }
 
   async function loadTechnologyOptions() {

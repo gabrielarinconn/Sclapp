@@ -1,4 +1,7 @@
 """
+
+FUTURE IMPLEMENTATION: this source is not working yet, but we will implement it in the future.
+
 GetOnBoard source: scrape https://www.getonbrd.com/empleos (jobs listing) and extract companies.
 Uses requests + BeautifulSoup. Contract: name, nit, email, phone, url, country, sector, technologies, source, source_url.
 MVP: max 30 items per run.

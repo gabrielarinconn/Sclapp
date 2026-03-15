@@ -5,9 +5,9 @@ import { apiClient, setSessionExpiredHandler } from './apiClient.js';
 import { renderLoginView } from './login.js';
 import { renderRegisterView } from './register.js';
 import { renderDashboardView } from './dashboard.js';
-import { renderCompaniesView } from './empresas.js';
-import { renderEmailsView } from './correos.js';
-import { renderProfileView } from './perfil.js';
+import { renderCompaniesView } from './companies.js';
+import { renderEmailsView } from './emails.js';
+import { renderProfileView } from './profile.js';
 
 const appRoot = document.getElementById('app');
 
@@ -56,14 +56,6 @@ function showAppShell(user) {
           <span class="nav-icono">🏢</span>
           <span>Companies</span>
         </button>
-        <button class="nav-item" data-view="emails">
-          <span class="nav-icono">✉</span>
-          <span>Emails</span>
-        </button>
-        <button class="nav-item" data-view="profile">
-          <span class="nav-icono">👤</span>
-          <span>Profile</span>
-        </button>
       </nav>
       <div class="sidebar-bottom">
         <button class="btn-cerrar-sesion" id="btnLogout">
@@ -83,11 +75,17 @@ function showAppShell(user) {
       <div id="topbar">
         <div class="topbar-search">
           <span style="color:#475569;font-size:13px;">🔍</span>
-          <input type="text" placeholder="Search companies, emails..." />
+          <input type="text" placeholder="Search companies..." />
         </div>
         <div class="topbar-right">
           <button class="topbar-ico-btn">🔔</button>
-          <div class="avatar-usuario">${initials}</div>
+          <div class="avatar-dropdown-wrap" style="position:relative;">
+            <button type="button" class="avatar-usuario avatar-usuario-btn" id="topbarAvatarBtn" title="Account menu" aria-haspopup="true" aria-expanded="false">${initials}</button>
+            <div class="avatar-dropdown" id="avatarDropdown" role="menu" aria-hidden="true" style="display:none;">
+              <button type="button" class="avatar-dropdown-item" data-action="profile" role="menuitem">Profile</button>
+              <button type="button" class="avatar-dropdown-item" data-action="logout" role="menuitem">Log out</button>
+            </div>
+          </div>
         </div>
       </div>
       <main id="main-content"></main>
@@ -129,6 +127,47 @@ function showAppShell(user) {
         showLoginScreen();
       }
     });
+  }
+
+  const avatarBtn = document.getElementById('topbarAvatarBtn');
+  const avatarDropdown = document.getElementById('avatarDropdown');
+  function closeAvatarDropdown() {
+    if (avatarDropdown) {
+      avatarDropdown.style.display = 'none';
+      avatarDropdown.setAttribute('aria-hidden', 'true');
+      if (avatarBtn) avatarBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+  if (avatarBtn && avatarDropdown) {
+    avatarBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = avatarDropdown.style.display === 'block';
+      avatarDropdown.style.display = isOpen ? 'none' : 'block';
+      avatarDropdown.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+      avatarBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    });
+    avatarDropdown.querySelectorAll('.avatar-dropdown-item').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAvatarDropdown();
+        if (item.dataset.action === 'profile') {
+          setActiveNav('profile');
+          navigateTo('profile');
+          window.location.hash = 'profile';
+        } else if (item.dataset.action === 'logout') {
+          (async () => {
+            const confirmed = window.confirm('Are you sure you want to log out?');
+            if (confirmed) {
+              try {
+                await apiClient.logout();
+              } catch (_) {}
+              showLoginScreen();
+            }
+          })();
+        }
+      });
+    });
+    document.addEventListener('click', closeAvatarDropdown);
   }
 
   const initialView = window.location.hash.replace('#', '') || 'dashboard';
