@@ -36,10 +36,23 @@ def _cookie_params(secure: bool):
     }
 
 
+def _get_user_id_from_payload(payload: dict) -> int:
+    user_id = payload.get("sub")
+
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
     settings = get_settings()
     secure = settings.get("cookie_secure", False)
     params = _cookie_params(secure)
+
     response.set_cookie(
         COOKIE_ACCESS,
         access_token,
@@ -55,7 +68,6 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
 
 
 def _clear_auth_cookies(response: Response) -> None:
-    params = _cookie_params(secure=False)
     response.delete_cookie(COOKIE_ACCESS, path="/")
     response.delete_cookie(COOKIE_REFRESH, path="/")
 
@@ -79,12 +91,14 @@ def register(payload: RegisterRequest):
         payload.email,
         payload.password,
     )
+
     if status == 400:
         raise HTTPException(status_code=400, detail=data.get("error", "missing fields"))
     if status == 409:
         raise HTTPException(status_code=409, detail=data.get("error", "email already registered"))
     if status == 500:
         raise HTTPException(status_code=500, detail=data.get("error", "server error"))
+
     return data
 
 
@@ -92,10 +106,12 @@ def register(payload: RegisterRequest):
 def login(payload: LoginRequest, response: Response):
     """Validate credentials; set access and refresh tokens in HttpOnly cookies."""
     data, status = AuthService.login_user(payload.email, payload.password)
+
     if status == 400:
         raise HTTPException(status_code=400, detail=data.get("error", "missing fields"))
     if status == 401:
         raise HTTPException(status_code=401, detail=data.get("error", "invalid credentials"))
+
     _set_auth_cookies(response, data["access_token"], data["refresh_token"])
     return {"message": data["message"], "user": data["user"]}
 
@@ -104,47 +120,52 @@ def login(payload: LoginRequest, response: Response):
 def refresh(request: Request, response: Response):
     """Issue new access token from refresh token in cookie. Optionally rotate refresh."""
     refresh_token = request.cookies.get(COOKIE_REFRESH)
+
     if not refresh_token:
         raise HTTPException(status_code=401, detail="No refresh token")
+
     try:
         payload = verify_refresh_token(refresh_token)
+        user_id = _get_user_id_from_payload(payload)
+
+        if get_user_id_by_refresh_token(refresh_token) is None:
+            _clear_auth_cookies(response)
+            raise HTTPException(status_code=401, detail="Refresh token revoked or expired")
+
+        revoke_refresh_token(refresh_token)
+
+        new_access = generate_access_token(user_id)
+        new_refresh = generate_refresh_token(user_id)
+
+        store_refresh_token(user_id, new_refresh)
+        _set_auth_cookies(response, new_access, new_refresh)
+
+        return {"message": "Token refreshed"}
+
     except HTTPException:
         _clear_auth_cookies(response)
         raise
-    user_id = payload.get("sub")
-    if not user_id:
-        _clear_auth_cookies(response)
-        raise HTTPException(status_code=401, detail="Invalid token")
-    if get_user_id_by_refresh_token(refresh_token) is None:
-        _clear_auth_cookies(response)
-        raise HTTPException(status_code=401, detail="Refresh token revoked or expired")
-    revoke_refresh_token(refresh_token)
-    new_access = generate_access_token(user_id)
-    new_refresh = generate_refresh_token(user_id)
-    store_refresh_token(user_id, new_refresh)
-    _set_auth_cookies(response, new_access, new_refresh)
-    return {"message": "Token refreshed"}
 
 
 @router.get("/me")
 def me(request: Request):
     """Return current user from access token in cookie."""
     access_token = request.cookies.get(COOKIE_ACCESS)
+
     if not access_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    try:
-        payload = verify_access_token(access_token)
-    except HTTPException:
-        raise
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
+
+    payload = verify_access_token(access_token)
+    user_id = _get_user_id_from_payload(payload)
+
     rows = execute_query(
         "SELECT id_user, full_name, email FROM users WHERE id_user = %s",
         (user_id,),
     )
+
     if not rows:
         raise HTTPException(status_code=401, detail="User not found")
+
     return {"user": dict(rows[0])}
 
 
@@ -152,7 +173,9 @@ def me(request: Request):
 def logout(request: Request, response: Response):
     """Revoke refresh token and clear auth cookies."""
     refresh_token = request.cookies.get(COOKIE_REFRESH)
+
     if refresh_token:
         revoke_refresh_token(refresh_token)
+
     _clear_auth_cookies(response)
     return {"message": "Logout successful"}

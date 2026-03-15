@@ -4,7 +4,7 @@ import hashlib
 import re
 from datetime import datetime, timedelta, timezone
 
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.core.security import (
     REFRESH_TOKEN_EXPIRE_DAYS,
@@ -27,9 +27,12 @@ def _hash_refresh_token(token: str) -> str:
 def store_refresh_token(id_user: int, refresh_token: str) -> None:
     expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     token_hash = _hash_refresh_token(refresh_token)
+
     execute_query(
-        """INSERT INTO refresh_tokens (id_user, token_hash, expires_at)
-           VALUES (%s, %s, %s)""",
+        """
+        INSERT INTO refresh_tokens (id_user, token_hash, expires_at)
+        VALUES (%s, %s, %s)
+        """,
         (id_user, token_hash, expires_at),
         fetch=False,
     )
@@ -37,25 +40,37 @@ def store_refresh_token(id_user: int, refresh_token: str) -> None:
 
 def revoke_refresh_token(refresh_token: str) -> None:
     token_hash = _hash_refresh_token(refresh_token)
+
     execute_query(
-        """UPDATE refresh_tokens SET revoked_at = CURRENT_TIMESTAMP
-           WHERE token_hash = %s AND revoked_at IS NULL""",
+        """
+        UPDATE refresh_tokens
+        SET revoked_at = CURRENT_TIMESTAMP
+        WHERE token_hash = %s AND revoked_at IS NULL
+        """,
         (token_hash,),
         fetch=False,
     )
 
 
 def get_user_id_by_refresh_token(refresh_token: str) -> int | None:
-    """Returns id_user if token is in DB, not revoked, and not expired; else None."""
+    """Return id_user if token exists, is not revoked, and is not expired."""
     token_hash = _hash_refresh_token(refresh_token)
+
     rows = execute_query(
-        """SELECT id_user FROM refresh_tokens
-           WHERE token_hash = %s AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP""",
+        """
+        SELECT id_user
+        FROM refresh_tokens
+        WHERE token_hash = %s
+          AND revoked_at IS NULL
+          AND expires_at > CURRENT_TIMESTAMP
+        """,
         (token_hash,),
     )
+
     if not rows:
         return None
-    return rows[0]["id_user"]
+
+    return int(rows[0]["id_user"])
 
 
 class AuthService:
@@ -63,8 +78,10 @@ class AuthService:
     def register_user(full_name: str, email: str, password: str):
         if not (full_name and email and password):
             return {"error": "missing fields"}, 400
+
         full_name = full_name.strip()
         email = email.strip().lower()
+
         if "@" not in email:
             return {"error": "invalid email"}, 400
 
@@ -78,7 +95,11 @@ class AuthService:
         user_name_base = _sanitize_username(email)
         user_name = user_name_base
         suffix = 0
-        while execute_query("SELECT id_user FROM users WHERE user_name = %s", (user_name,)):
+
+        while execute_query(
+            "SELECT id_user FROM users WHERE user_name = %s",
+            (user_name,),
+        ):
             suffix += 1
             user_name = f"{user_name_base}{suffix}"
 
@@ -94,42 +115,56 @@ class AuthService:
         password_hash = generate_password_hash(password)
 
         execute_query(
-            """INSERT INTO users (full_name, doc_num, user_name, email, password_hash, id_role)
-               VALUES (%s, %s, %s, %s, %s, %s)""",
+            """
+            INSERT INTO users (full_name, doc_num, user_name, email, password_hash, id_role)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
             (full_name, doc_num, user_name, email, password_hash, id_role),
             fetch=False,
         )
+
         return {"message": "User registered successfully"}, 201
 
     @staticmethod
     def login_user(email: str, password: str):
         if not email or not password:
             return {"error": "missing fields"}, 400
+
         email = email.strip().lower()
+
         rows = execute_query(
-            "SELECT id_user, full_name, email, password_hash FROM users WHERE LOWER(email) = %s",
+            """
+            SELECT id_user, full_name, email, password_hash
+            FROM users
+            WHERE LOWER(email) = %s
+            """,
             (email,),
         )
+
         if not rows:
             return {"error": "invalid credentials"}, 401
+
         user = rows[0]
+
         if not check_password_hash(user["password_hash"], password):
             return {"error": "invalid credentials"}, 401
 
+        user_id = int(user["id_user"])
+
         execute_query(
             "UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id_user = %s",
-            (user["id_user"],),
+            (user_id,),
             fetch=False,
         )
 
-        access_token = generate_access_token(user["id_user"])
-        refresh_token = generate_refresh_token(user["id_user"])
-        store_refresh_token(user["id_user"], refresh_token)
+        access_token = generate_access_token(user_id)
+        refresh_token = generate_refresh_token(user_id)
+        store_refresh_token(user_id, refresh_token)
 
         return {
             "message": "Login successful",
             "user": {
-                "id_user": user["id_user"],
+                "id_user": user_id,
                 "full_name": user["full_name"],
                 "email": user["email"],
             },
